@@ -1,9 +1,8 @@
-from router import router
+import router
 from fastapi import FastAPI
 import firebase_admin
 from pathlib import  Path
 from fastapi.middleware.cors import CORSMiddleware
-from typing import Union
 from config import get_settings
 
 app = FastAPI()
