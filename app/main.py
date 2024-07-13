@@ -1,4 +1,4 @@
-import router
+from router import router
 from fastapi import FastAPI
 import firebase_admin
 from fastapi.middleware.cors import CORSMiddleware
