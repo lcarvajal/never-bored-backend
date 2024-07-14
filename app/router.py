@@ -36,7 +36,7 @@ def post_profile(profile: Profile):
     upload_blob(file_name, file_content)
 
 @router.get("/roadmap")
-def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+def get_roadmap():
     """Gets the roadmap based on the learner profile"""
     return [
         {
