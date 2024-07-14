@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
 from app.config import get_firebase_user_from_token, upload_blob
+import json
 
 router = APIRouter()
 
@@ -12,8 +13,16 @@ def hello():
 @router.post("/profile")
 def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Uploads profile to azure blob storage"""
+    uid = user["uid"]
+    email = user["email"]
+
     file_name = "username.json"
-    file_content = '{"email": "p5q5y@example.com", "username": "username"}'
+    profile = {
+        "email": email,
+        "uid": uid
+    }
+    file_content = json.dumps(profile)
+
     upload_blob(file_name, file_content)
 
 
