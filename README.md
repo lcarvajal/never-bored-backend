@@ -10,3 +10,4 @@ The backend for the Never Bored Learning Frontend.
 ## Commands
 
 - `fastapi dev main.py`
+- `pip freeze > requirements.txt`
