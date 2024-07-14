@@ -45,9 +45,7 @@ def get_firebase_user_from_token(
     try:
         if not token:
             raise ValueError("No token provided")
-        logger.info(f"Token received: {token.credentials}")
         user = auth.verify_id_token(token.credentials)
-        logger.info(f"User verified: {user}")
         return user
     except Exception as e:
         logger.error(f"Error verifying token: {str(e)}")
