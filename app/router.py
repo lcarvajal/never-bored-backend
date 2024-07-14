@@ -35,12 +35,26 @@ def post_profile(profile: Profile):
 
     upload_blob(file_name, file_content)
 
-# @router.get("/roadmap")
-# def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
-#     """Generates a learning path based on the user profile"""
-#     file_name = "username.json"
-#     file_content = '{"email": "p5q5y@example.com", "id": "username"}'
-#     upload_blob(file_name, file_content)
+@router.get("/roadmap")
+def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+    """Gets the roadmap based on the learner profile"""
+    return [
+        {
+            "id": 1,
+            "goal": 'Identify Basic Javascript Concepts',
+            "description": 'Identify variables, describe data types, define functions, and explain loops, conditionals, arrays, and objects.',
+        },
+        {
+            id: 2,
+            "goal": 'Apply ES6 features',
+            "description": 'Use arrow functions, demonstrate template literals, explain destructuring, implement spread/rest operators, and describe classes and modules.',
+        },
+        {
+            "id": 3,
+            "goal": 'Set Up the React Environment',
+            "description": 'Install Node.js with npm or yarn.',
+        }
+    ]
 
 @router.get("/userid")
 async def get_userid(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
