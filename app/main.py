@@ -3,10 +3,14 @@ from fastapi import FastAPI
 import firebase_admin
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
+import os
+import json
+import base64
 
 app = FastAPI()
 app.include_router(router)
 settings = get_settings()
+
 origins = [settings.frontend_url]
 
 app.add_middleware(
@@ -17,7 +21,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-firebase_admin.initialize_app()
+# Initialize Firebase
+service_account_info = json.loads(base64.b64decode(os.getenv('FIREBASE_SERVICE_ACCOUNT')))
+cred = firebase_admin.credentials.Certificate(service_account_info)
+firebase_admin.initialize_app(cred)
 
 # Debug, check app is correctly
 print("Current App Name:", firebase_admin.get_app().project_id)
