@@ -12,7 +12,10 @@ app = FastAPI()
 app.include_router(router)
 settings = get_settings()
 
-origins = [settings.frontend_url]
+origins = [
+    settings.frontend_url,
+    "https://localhost:5173",
+]
 
 app.add_middleware(
     CORSMiddleware,
