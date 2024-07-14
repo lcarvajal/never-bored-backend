@@ -1,14 +1,11 @@
-import logging
-import os
-import pathlib
+import os, logging
 from functools import lru_cache
 from typing import Annotated, Optional
-
-from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from firebase_admin import credentials, initialize_app, auth
+from firebase_admin import auth
 from pydantic_settings import BaseSettings
+from azure.storage.blob import BlobServiceClient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -55,3 +52,17 @@ def get_firebase_user_from_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+def upload_blob(file_name, file_content):
+    try:
+        connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
+        if not connect_str:
+            raise ValueError("Azure Storage connection string not found.")
+        
+        blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+        blob_client = blob_service_client.get_blob_client(container="user-profile", blob=file_name)
+        blob_client.upload_blob(file_content, overwrite=True)
+
+    except ValueError as ve:
+        logger.error(f"ValueError: {ve}")
+    except Exception as ex:
+        logger.error(f"Exception: {ex}")
