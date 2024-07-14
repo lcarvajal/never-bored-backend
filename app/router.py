@@ -12,24 +12,22 @@ def hello():
     return {"msg": "Hello World!"}
 
 class Profile(BaseModel):
+    uid: str
     name: str
     email: str
     goal: str
     reason: str
-    deadline: str
-    lastLearnedDescription: str
 
 @router.post("/profiles")
-def post_profile(profile: Profile):
+def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
     """Uploads profile to azure blob storage"""
-    file_name = f'profile-{profile.email}.json'
+    file_name = f'profile-{profile.uid}.json'
     profile = {
+        "uid": profile.uid,
         "name": profile.name,
         "email": profile.email,
         "goal": profile.goal,
-        "reason": profile.reason,
-        "deadline": profile.deadline,
-        "lastLearnedDescription": profile.lastLearnedDescription
+        "reason": profile.reason
     }
     file_content = json.dumps(profile)
 
