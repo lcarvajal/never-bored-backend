@@ -22,7 +22,12 @@ app.add_middleware(
 )
 
 # Initialize Firebase
-service_account_info = json.loads(base64.b64decode(os.getenv('FIREBASE_SERVICE_ACCOUNT')))
+firebase_service_account = os.getenv('FIREBASE_SERVICE_ACCOUNT')
+
+if not firebase_service_account:
+    raise ValueError("FIREBASE_SERVICE_ACCOUNT environment variable not set")
+
+service_account_info = json.loads(base64.b64decode(firebase_service_account))
 cred = firebase_admin.credentials.Certificate(service_account_info)
 firebase_admin.initialize_app(cred)
 
