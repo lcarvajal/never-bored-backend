@@ -32,6 +32,3 @@ if not firebase_service_account:
 service_account_info = json.loads(base64.b64decode(firebase_service_account))
 cred = firebase_admin.credentials.Certificate(service_account_info)
 firebase_admin.initialize_app(cred)
-
-# Debug, check app is correctly
-print("Current App Name:", firebase_admin.get_app().project_id)
