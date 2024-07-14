@@ -6,11 +6,13 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from firebase_admin import auth
 from pydantic_settings import BaseSettings
 from azure.storage.blob import BlobServiceClient
+from dotenv import load_dotenv
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+load_dotenv()
 
 # Use a simple bearer scheme as auth is handled by firebase and not fastapi
 bearer_scheme = HTTPBearer(auto_error=False)

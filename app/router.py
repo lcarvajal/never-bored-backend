@@ -16,7 +16,7 @@ def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     uid = user["uid"]
     email = user["email"]
 
-    file_name = "username.json"
+    file_name = f'{uid}.json'
     profile = {
         "email": email,
         "uid": uid
