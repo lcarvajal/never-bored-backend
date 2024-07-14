@@ -41,17 +41,17 @@ def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     return [
         {
             "id": 1,
-            "goal": "Identify Basic Javascript Concepts",
+            "name": "Identify Basic Javascript Concepts",
             "description": "Identify variables, describe data types, define functions, and explain loops, conditionals, arrays, and objects.",
         },
         {
             "id": 2,
-            "goal": "Apply ES6 features",
+            "name": "Apply ES6 features",
             "description": "Use arrow functions, demonstrate template literals, explain destructuring, implement spread/rest operators, and describe classes and modules.",
         },
         {
             "id": 3,
-            "goal": "Set Up the React Environment",
+            "name": "Set Up the React Environment",
             "description": "Install Node.js with npm or yarn.",
         }
     ]
