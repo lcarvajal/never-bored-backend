@@ -1,8 +1,13 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
 from app.config import get_firebase_user_from_token, upload_blob, download_blob
 import json, logging
 from pydantic import BaseModel
+from typing import List
+
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import JsonOutputParser
 
 router = APIRouter()
 
@@ -24,23 +29,11 @@ class Profile(BaseModel):
 def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
     """Uploads profile to azure blob storage"""
     logger.info('Setting up profile upload')
-    file_name = f'profile-{profile.uid}.json'
-    file_content = json.dumps(profile)
+    file_name = f'profile-{user["uid"]}.json'
+    file_content = json.dumps(profile.model_dump())
 
     upload_blob(file_name, file_content)
     return {}
-
-@router.get("/roadmaps")
-async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
-    """Gets the roadmap based on the learner profile"""
-    uid = user["uid"]
-    roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
-    # TODO: The roadmap variable contains a json file. Convert it to a python dictionary.
-
-    if roadmap_json:
-        return json.loads(roadmap_json)
-    else:
-        return []
 
 @router.post("/roadmaps")
 async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
@@ -48,11 +41,53 @@ async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_tok
     uid = user["uid"]
     profile_json = await download_blob(f'profile-{uid}.json', "user-profile")
 
-    if profile_json:
-        profile = json.loads(profile_json)
-        return profile
-        # TODO: Generate roadmap with Langchain
-        # Store roadmap with langchain
+    if not profile_json:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    profile = json.loads(profile_json)
+    
+    model = ChatOpenAI()
+
+    class LearningGoal(BaseModel):
+        id: int
+        name: str
+        description: str
+
+    class StudyPlan(BaseModel):
+        modules: List[LearningGoal]
+        learning_goal: str
+    
+    parser = JsonOutputParser(pydantic_object=StudyPlan)
+
+    # A chat template converts raw user input into better input for an llm.
+    prompt = PromptTemplate(
+        template="Break down the learning goal into smaller learning goals using Blooms taxonomy verbs: \n{format_instructions}\n{learning_goal}\n",
+        input_variables=["learning_goal"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+    )
+
+    chain = prompt | model | parser
+
+    learning_goal = profile["goal"]
+
+    file_name = f'roadmap-{uid}.json'
+    roadmap = chain.invoke({"learning_goal": learning_goal})
+
+    upload_blob(file_name, json.dumps(roadmap))
+    
+    return roadmap
+
+@router.get("/roadmaps")
+async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+    """Gets the roadmap based on the learner profile"""
+    uid = user["uid"]
+    roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
+
+    if not roadmap_json:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+
+    if roadmap_json:
+        return json.loads(roadmap_json)
 
 @router.get("/userid")
 async def get_userid(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
