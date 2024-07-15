@@ -16,7 +16,6 @@ class Profile(BaseModel):
     name: str
     email: str
     goal: str
-    reason: str
 
 @router.post("/profiles")
 def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
@@ -26,14 +25,13 @@ def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)], p
         "uid": profile.uid,
         "name": profile.name,
         "email": profile.email,
-        "goal": profile.goal,
-        "reason": profile.reason
+        "goal": profile.goal
     }
     file_content = json.dumps(profile)
 
     upload_blob(file_name, file_content)
 
-@router.get("/roadmap")
+@router.get("/roadmaps")
 async def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Gets the roadmap based on the learner profile"""
     uid = user["uid"]
@@ -45,7 +43,7 @@ async def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token
     else:
         return []
 
-@router.post("/roadmap")
+@router.post("/roadmaps")
 async def post_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Creates a roadmap based on the learner profile"""
     uid = user["uid"]
