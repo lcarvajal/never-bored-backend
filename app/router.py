@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
 from app.config import get_firebase_user_from_token, upload_blob, download_blob
-import json
+import json, logging
 from pydantic import BaseModel
 
 router = APIRouter()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @router.get("/")
 def hello():
@@ -18,21 +21,16 @@ class Profile(BaseModel):
     goal: str
 
 @router.post("/profiles")
-def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
+def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
     """Uploads profile to azure blob storage"""
+    logger.info('Setting up profile upload')
     file_name = f'profile-{profile.uid}.json'
-    profile = {
-        "uid": profile.uid,
-        "name": profile.name,
-        "email": profile.email,
-        "goal": profile.goal
-    }
     file_content = json.dumps(profile)
 
     upload_blob(file_name, file_content)
 
 @router.get("/roadmaps")
-async def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Gets the roadmap based on the learner profile"""
     uid = user["uid"]
     roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
@@ -44,7 +42,7 @@ async def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token
         return []
 
 @router.post("/roadmaps")
-async def post_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Creates a roadmap based on the learner profile"""
     uid = user["uid"]
     profile_json = await download_blob(f'profile-{uid}.json', "user-profile")
