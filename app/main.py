@@ -15,6 +15,7 @@ settings = get_settings()
 origins = [
     settings.frontend_url,
     "https://localhost:5173",
+    "https://never-bored-learning.vercel.app"
 ]
 
 app.add_middleware(
