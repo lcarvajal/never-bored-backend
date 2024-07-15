@@ -68,3 +68,18 @@ def upload_blob(file_name, file_content):
         logger.error(f"ValueError: {ve}")
     except Exception as ex:
         logger.error(f"Exception: {ex}")
+
+async def download_blob(file_name, container):
+    try:
+        connect_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
+        if not connect_str:
+            raise ValueError("Azure Storage connection string not found.")
+        
+        blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+        blob_client = blob_service_client.get_blob_client(container, blob=file_name)
+        blob_data = blob_client.download_blob().readall()
+        return blob_data
+    except ValueError as ve:
+        logger.error(f"ValueError: {ve}")
+    except Exception as ex:
+        logger.error(f"Exception: {ex}")

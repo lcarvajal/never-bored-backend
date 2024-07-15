@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
-from app.config import get_firebase_user_from_token, upload_blob
+from app.config import get_firebase_user_from_token, upload_blob, download_blob
 import json
 from pydantic import BaseModel
 
@@ -34,25 +34,28 @@ def post_profile(user: Annotated[dict, Depends(get_firebase_user_from_token)], p
     upload_blob(file_name, file_content)
 
 @router.get("/roadmap")
-def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+async def get_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Gets the roadmap based on the learner profile"""
-    return [
-        {
-            "id": 1,
-            "name": "Identify Basic Javascript Concepts",
-            "description": "Identify variables, describe data types, define functions, and explain loops, conditionals, arrays, and objects.",
-        },
-        {
-            "id": 2,
-            "name": "Apply ES6 features",
-            "description": "Use arrow functions, demonstrate template literals, explain destructuring, implement spread/rest operators, and describe classes and modules.",
-        },
-        {
-            "id": 3,
-            "name": "Set Up the React Environment",
-            "description": "Install Node.js with npm or yarn.",
-        }
-    ]
+    uid = user["uid"]
+    roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
+    # TODO: The roadmap variable contains a json file. Convert it to a python dictionary.
+
+    if roadmap_json:
+        return json.loads(roadmap_json)
+    else:
+        return []
+
+@router.post("/roadmap")
+async def post_roadmap(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+    """Creates a roadmap based on the learner profile"""
+    uid = user["uid"]
+    profile_json = await download_blob(f'profile-{uid}.json', "user-profile")
+
+    if profile_json:
+        profile = json.loads(profile_json)
+        return profile
+        # TODO: Generate roadmap with Langchain
+        # Store roadmap with langchain
 
 @router.get("/userid")
 async def get_userid(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
