@@ -1,4 +1,4 @@
-import os, logging
+import os, logging, requests
 from functools import lru_cache
 from typing import Annotated, Optional
 from fastapi import Depends, HTTPException, status
@@ -64,10 +64,8 @@ def upload_blob(file_name, file_content):
         blob_client = blob_service_client.get_blob_client(container="user-profile", blob=file_name)
         blob_client.upload_blob(file_content, overwrite=True)
 
-    except ValueError as ve:
-        logger.error(f"ValueError: {ve}")
-    except Exception as ex:
-        logger.error(f"Exception: {ex}")
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
 
 async def download_blob(file_name, container):
     try:
@@ -79,7 +77,5 @@ async def download_blob(file_name, container):
         blob_client = blob_service_client.get_blob_client(container, blob=file_name)
         blob_data = blob_client.download_blob().readall()
         return blob_data
-    except ValueError as ve:
-        logger.error(f"ValueError: {ve}")
-    except Exception as ex:
-        logger.error(f"Exception: {ex}")
+    except requests.exceptions.RequestException as e:
+        raise HTTPException(status_code=404, detail="Roadmap not found")

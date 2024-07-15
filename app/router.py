@@ -40,10 +40,6 @@ async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_tok
     """Creates a roadmap based on the learner profile"""
     uid = user["uid"]
     profile_json = await download_blob(f'profile-{uid}.json', "user-profile")
-
-    if not profile_json:
-        raise HTTPException(status_code=404, detail="Profile not found")
-
     profile = json.loads(profile_json)
     
     model = ChatOpenAI()
@@ -82,9 +78,6 @@ async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_toke
     """Gets the roadmap based on the learner profile"""
     uid = user["uid"]
     roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
-
-    if not roadmap_json:
-        raise HTTPException(status_code=404, detail="Roadmap not found")
 
     if roadmap_json:
         return json.loads(roadmap_json)
