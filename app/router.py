@@ -4,6 +4,7 @@ from app.authentication import get_firebase_user_from_token
 from app.llm import get_roadmap
 import json
 from pydantic import BaseModel
+from app.storage import upload_blob, download_blob
 
 router = APIRouter()
 
@@ -21,7 +22,6 @@ class Profile(BaseModel):
 @router.post("/profiles")
 def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
     """Uploads profile to azure blob storage"""
-    from app.storage import upload_blob
     file_name = f'profile-{user["uid"]}.json'
     file_content = json.dumps(profile.model_dump())
 
@@ -31,7 +31,6 @@ def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], 
 @router.post("/roadmaps")
 async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Creates a roadmap based on the learner profile"""
-    from app.storage import upload_blob, download_blob
     uid = user["uid"]
     profile_json = await download_blob(f'profile-{uid}.json', "user-profile")
     profile = json.loads(profile_json)
@@ -47,7 +46,6 @@ async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_tok
 @router.get("/roadmaps")
 async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Gets the roadmap based on the learner profile"""
-    from app.storage import download_blob
     uid = user["uid"]
     roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
 
