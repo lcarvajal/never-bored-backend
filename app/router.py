@@ -28,6 +28,7 @@ def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], 
     file_content = json.dumps(profile)
 
     upload_blob(file_name, file_content)
+    return {}
 
 @router.get("/roadmaps")
 async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
