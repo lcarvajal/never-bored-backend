@@ -1,18 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from typing import Annotated
-from app.config import get_firebase_user_from_token, upload_blob, download_blob
-import json, logging
+from app.authentication import get_firebase_user_from_token
+from llm import get_roadmap
+import json
 from pydantic import BaseModel
-from typing import List
-
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import JsonOutputParser
 
 router = APIRouter()
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 @router.get("/")
 def hello():
@@ -28,7 +21,7 @@ class Profile(BaseModel):
 @router.post("/profiles")
 def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
     """Uploads profile to azure blob storage"""
-    logger.info('Setting up profile upload')
+    from app.storage import upload_blob
     file_name = f'profile-{user["uid"]}.json'
     file_content = json.dumps(profile.model_dump())
 
@@ -38,36 +31,14 @@ def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], 
 @router.post("/roadmaps")
 async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Creates a roadmap based on the learner profile"""
+    from app.storage import upload_blob, download_blob
     uid = user["uid"]
     profile_json = await download_blob(f'profile-{uid}.json', "user-profile")
     profile = json.loads(profile_json)
     
-    model = ChatOpenAI()
-
-    class LearningGoal(BaseModel):
-        id: int
-        name: str
-        description: str
-
-    class StudyPlan(BaseModel):
-        modules: List[LearningGoal]
-        learning_goal: str
-    
-    parser = JsonOutputParser(pydantic_object=StudyPlan)
-
-    # A chat template converts raw user input into better input for an llm.
-    prompt = PromptTemplate(
-        template="Break down the learning goal into smaller learning goals using Blooms taxonomy verbs: \n{format_instructions}\n{learning_goal}\n",
-        input_variables=["learning_goal"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
-    )
-
-    chain = prompt | model | parser
-
     learning_goal = profile["goal"]
-
     file_name = f'roadmap-{uid}.json'
-    roadmap = chain.invoke({"learning_goal": learning_goal})
+    roadmap = get_roadmap(learning_goal)
 
     upload_blob(file_name, json.dumps(roadmap))
     
@@ -76,6 +47,7 @@ async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_tok
 @router.get("/roadmaps")
 async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Gets the roadmap based on the learner profile"""
+    from app.storage import download_blob
     uid = user["uid"]
     roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
 
