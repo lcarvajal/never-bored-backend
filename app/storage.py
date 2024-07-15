@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from azure.storage.blob import BlobServiceClient
-import os, requests
+import os
 
 def upload_blob(file_name, file_content):
     try:
@@ -12,7 +12,7 @@ def upload_blob(file_name, file_content):
         blob_client = blob_service_client.get_blob_client(container="user-profile", blob=file_name)
         blob_client.upload_blob(file_content, overwrite=True)
 
-    except requests.exceptions.RequestException as e:
+    except:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Not able to upload file.",
@@ -28,7 +28,7 @@ async def download_blob(file_name, container):
         blob_client = blob_service_client.get_blob_client(container, blob=file_name)
         blob_data = blob_client.download_blob().readall()
         return blob_data
-    except requests.exceptions.RequestException as e:
+    except:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f'Not able to find {file_name}',
