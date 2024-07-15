@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
 from app.authentication import get_firebase_user_from_token
-from llm import get_roadmap
+from app.llm import get_roadmap
 import json
 from pydantic import BaseModel
 
