@@ -4,7 +4,6 @@ from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
 load_dotenv()
-
 class Settings(BaseSettings):
     """Main settings"""
     app_name: str = "never-bored-learning"
