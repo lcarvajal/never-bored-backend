@@ -59,7 +59,7 @@ class RoadmapItem(BaseModel):
     description: str
 
 @router.post("/categories")
-async def post_categories(roadmapItem: RoadmapItem):
+async def post_categories(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmapItem: RoadmapItem):
     """Generates a list of categories for the current roadmap item"""
     categories_response = get_categories(roadmapItem.learning_goal, roadmapItem.name, roadmapItem.description)
     return categories_response
