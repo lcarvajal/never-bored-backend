@@ -62,3 +62,14 @@ async def post_categories(roadmapItem: RoadmapItem):
     """Generates a list of categories for the current roadmap item"""
     categories = get_categories(roadmapItem.learning_goal, roadmapItem.name, roadmapItem.description)
     return categories
+
+class RoadmapItem(BaseModel):
+    learning_goal: str
+    name: str
+    description: str
+    category: str
+
+@router.get("/tasks")
+async def get_tasks(roadmapItem: RoadmapItem):
+    """Creates a list of resources based on the current roadmap item and category"""
+    return []
