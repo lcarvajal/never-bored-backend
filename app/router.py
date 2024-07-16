@@ -61,8 +61,8 @@ class RoadmapItem(BaseModel):
 @router.post("/categories")
 async def post_categories(roadmapItem: RoadmapItem):
     """Generates a list of categories for the current roadmap item"""
-    llm_categories_response = get_categories(roadmapItem.learning_goal, roadmapItem.name, roadmapItem.description)
-    return llm_categories_response.categories
+    categories_response = get_categories(roadmapItem.learning_goal, roadmapItem.name, roadmapItem.description)
+    return categories_response
 
 class Topic(BaseModel):
     description: str
@@ -71,4 +71,4 @@ class Topic(BaseModel):
 async def post_tasks(topic: Topic):
     """Creates a list of resources based on the topic"""
     search_resources = get_search_resources(topic.description)
-    return search_resources.results
+    return search_resources
