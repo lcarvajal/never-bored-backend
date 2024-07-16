@@ -67,8 +67,8 @@ async def post_categories(roadmapItem: RoadmapItem):
 class Topic(BaseModel):
     description: str
 
-@router.get("/tasks")
-async def get_tasks(topic: Topic):
-    """Creates a list of resources based on the current roadmap item and category"""
+@router.post("/tasks")
+async def post_tasks(topic: Topic):
+    """Creates a list of resources based on the topic"""
     search_resources = get_search_resources(topic.description)
     return search_resources
