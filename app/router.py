@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
 from app.authentication import get_firebase_user_from_token
-from app.llm import get_roadmap
+from app.llm import get_roadmap, get_categories
+from app.ragsearch import get_search_resources
 import json
 from pydantic import BaseModel
 from app.storage import upload_blob, download_blob
@@ -52,7 +53,22 @@ async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_toke
     if roadmap_json:
         return json.loads(roadmap_json)
 
-@router.get("/userid")
-async def get_userid(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
-    """gets the firebase connected user"""
-    return {"id": user["uid"]}
+class RoadmapItem(BaseModel):
+    learning_goal: str
+    name: str
+    description: str
+
+@router.post("/categories")
+async def post_categories(roadmapItem: RoadmapItem):
+    """Generates a list of categories for the current roadmap item"""
+    categories = get_categories(roadmapItem.learning_goal, roadmapItem.name, roadmapItem.description)
+    return categories
+
+class Topic(BaseModel):
+    description: str
+
+@router.post("/tasks")
+async def post_tasks(topic: Topic):
+    """Creates a list of resources based on the topic"""
+    search_resources = get_search_resources(topic.description)
+    return search_resources
