@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from typing import Annotated
 from app.authentication import get_firebase_user_from_token
 from app.llm import get_roadmap, get_categories
+from app.ragsearch import get_search_resources
 import json
 from pydantic import BaseModel
 from app.storage import upload_blob, download_blob
@@ -63,13 +64,11 @@ async def post_categories(roadmapItem: RoadmapItem):
     categories = get_categories(roadmapItem.learning_goal, roadmapItem.name, roadmapItem.description)
     return categories
 
-class RoadmapItem(BaseModel):
-    learning_goal: str
-    name: str
+class Topic(BaseModel):
     description: str
-    category: str
 
 @router.get("/tasks")
-async def get_tasks(roadmapItem: RoadmapItem):
+async def get_tasks(topic: Topic):
     """Creates a list of resources based on the current roadmap item and category"""
-    return []
+    search_resources = get_search_resources(topic.description)
+    return search_resources

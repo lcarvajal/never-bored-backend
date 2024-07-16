@@ -30,13 +30,17 @@ def get_roadmap(learning_goal: str):
 def get_categories(learning_goal: str, roadmap_item_name: str, roadmap_item_description: str):
   model = ChatOpenAI()
 
+  class Category(BaseModel):
+     name: str
+     description: str
+
   class Categories(BaseModel):
-      categories: List[str]
+      categories: List[Category]
   
   parser = JsonOutputParser(pydantic_object=Categories)
 
   prompt = PromptTemplate(
-      template="A user has the learning goal `{learning_goal}` and roadmap item `{roadmap_item_name}` with description `{roadmap_item_description}`. Break the roadmap description into a list of categories for grouping learning resources. Keep the category names short since they will be used on buttons:\n{format_instructions}\n",
+      template="A user has the learning goal `{learning_goal}` and is focused on `{roadmap_item_description}`. Break down what they're focused on into a list of categories. Keep the category names short since they will be used on buttons:\n{format_instructions}\n",
       input_variables=["learning_goal", "roadmap_item_name", "roadmap_item_description"],
       partial_variables={"format_instructions": parser.get_format_instructions()},
   )
