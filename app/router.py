@@ -56,6 +56,15 @@ async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_toke
 
     if roadmap_json:
         return json.loads(roadmap_json)
+    
+@router.get("/roadmaps/{roadmap_name}/{submodule_id}")
+async def get_submodule(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str, submodule_id: int):
+    posthog.capture(user["uid"], 'view-submodule')
+    submodule_json = await download_blob(f'{roadmap_name}/{submodule_id}.json', "roadmaps")
+    
+    if submodule_json:
+        return json.loads(submodule_json)
+
 
 class RoadmapItem(BaseModel):
     learning_goal: str
@@ -74,6 +83,6 @@ class Topic(BaseModel):
 @router.post("/tasks")
 async def post_tasks(user: Annotated[dict, Depends(get_firebase_user_from_token)], topic: Topic):
     """Creates a list of resources based on the topic"""
-    posthog.capture(user["uid"], 'view-tasks')
+    posthog.capture(user["uid"], 'view-submodule')
     search_resources = get_search_resources(topic.description)
     return search_resources
