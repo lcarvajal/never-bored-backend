@@ -3,11 +3,13 @@ from typing import Annotated
 from app.authentication import get_firebase_user_from_token
 from app.llm import get_roadmap, get_categories
 from app.ragsearch import get_search_resources
-import json
+import json, os
 from pydantic import BaseModel
 from app.storage import upload_blob, download_blob
+from posthog import Posthog
 
 router = APIRouter()
+posthog = Posthog(project_api_key=os.getenv('POSTHOG_API_KEY'), host='https://eu.i.posthog.com')
 
 @router.get("/")
 def hello():
@@ -42,11 +44,13 @@ async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_tok
 
     upload_blob(file_name, json.dumps(roadmap))
     
+    posthog.capture(uid, 'signup')
     return roadmap
 
 @router.get("/roadmaps")
 async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Gets the roadmap based on the learner profile"""
+    posthog.capture(user["uid"], 'view-roadmap')
     uid = user["uid"]
     roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
 
@@ -68,7 +72,8 @@ class Topic(BaseModel):
     description: str
 
 @router.post("/tasks")
-async def post_tasks(topic: Topic):
+async def post_tasks(user: Annotated[dict, Depends(get_firebase_user_from_token)], topic: Topic):
     """Creates a list of resources based on the topic"""
+    posthog.capture(user["uid"], 'view-tasks')
     search_resources = get_search_resources(topic.description)
     return search_resources
