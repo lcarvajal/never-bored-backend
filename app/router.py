@@ -57,13 +57,21 @@ async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_toke
     if roadmap_json:
         return json.loads(roadmap_json)
     
-@router.get("/roadmaps/{roadmap_name}/{submodule_id}")
-async def get_submodule(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str, submodule_id: int):
-    posthog.capture(user["uid"], 'view-submodule')
-    submodule_json = await download_blob(f'{roadmap_name}/{submodule_id}.json', "roadmaps")
+@router.get("roadmaps/{roadmap_name}")
+async def get_modules(roadmap_name: str):
+    """Gets the roadmap with modules"""
+    roadmap_json = await download_blob(f'{roadmap_name}/outline.json', "roadmaps")
     
-    if submodule_json:
-        return json.loads(submodule_json)
+    if roadmap_json:
+        return json.loads(roadmap_json)
+
+@router.get("/roadmaps/{roadmap_name}/{module_id}")
+async def get_submodule(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str, module_id: int):
+    posthog.capture(user["uid"], 'view-submodule')
+    module_json = await download_blob(f'{roadmap_name}/{module_id}.json', "roadmaps")
+    
+    if module_json:
+        return json.loads(module_json)
 
 
 class RoadmapItem(BaseModel):
