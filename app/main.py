@@ -8,12 +8,12 @@ import json
 import base64
 from dotenv import load_dotenv
 
+load_dotenv()
 app = FastAPI()
 app.include_router(router)
 settings = get_settings()
 
 origins = [
-    settings.frontend_url,
     "https://localhost:5173",
     "https://never-bored-learning.vercel.app"
 ]
@@ -27,7 +27,6 @@ app.add_middleware(
 )
 
 # Initialize Firebase
-load_dotenv()
 firebase_service_account = os.getenv('FIREBASE_SERVICE_ACCOUNT')
 
 if not firebase_service_account:
