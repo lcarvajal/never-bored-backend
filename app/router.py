@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from typing import Annotated
+from typing import Annotated, List
 from app.authentication import get_firebase_user_from_token
 from app.llm import get_roadmap, get_categories
 from app.ragsearch import get_search_resources
@@ -21,6 +21,7 @@ class Profile(BaseModel):
     name: str
     email: str
     goal: str
+    static_roadmaps: List[str]
 
 @router.post("/profiles")
 def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
