@@ -58,7 +58,7 @@ async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_toke
         return json.loads(roadmap_json)
     
 @router.get("/roadmaps/{roadmap_name}")
-async def get_modules(roadmap_name: str):
+async def get_modules(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str):
     """Gets the roadmap with modules"""
     roadmap_json = await download_blob(f'{roadmap_name}/outline.json', "roadmaps")
     
