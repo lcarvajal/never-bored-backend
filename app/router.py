@@ -32,11 +32,14 @@ def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], 
     return {}
 
 @router.get("/profiles")
-def get_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+async def get_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Downloads profile from azure blob storage"""
     file_name = f'profile-{user["uid"]}.json'
-    profile_json = download_blob(file_name, "user-profile")
-    return json.loads(profile_json)
+    profile_json = await download_blob(file_name, "user-profile")
+    if profile_json:
+        return json.loads(profile_json)
+    else:
+        return {}
 
 @router.post("/roadmaps")
 async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
