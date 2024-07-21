@@ -8,6 +8,7 @@ import json
 import base64
 from dotenv import load_dotenv
 
+load_dotenv()
 app = FastAPI()
 app.include_router(router)
 settings = get_settings()
@@ -27,7 +28,6 @@ app.add_middleware(
 )
 
 # Initialize Firebase
-load_dotenv()
 firebase_service_account = os.getenv('FIREBASE_SERVICE_ACCOUNT')
 
 if not firebase_service_account:
