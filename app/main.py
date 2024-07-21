@@ -14,8 +14,6 @@ app.include_router(router)
 settings = get_settings()
 
 origins = [
-    settings.frontend_url,
-    "https://localhost",
     "https://localhost:5173",
     "https://never-bored-learning.vercel.app"
 ]
