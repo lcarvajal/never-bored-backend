@@ -11,10 +11,13 @@ from posthog import Posthog
 router = APIRouter()
 posthog = Posthog(project_api_key=os.getenv('POSTHOG_API_KEY'), host='https://eu.i.posthog.com')
 
+if os.getenv('ENV') == 'dev':
+    # posthog.debug = True
+    posthog.disabled = True
+
 @router.get("/")
 def hello():
     """Hello world route to make sure the app is working correctly"""
-    posthog.capture('test_id', 'test_event')
     return {"msg": "Hello World!"}
 
 class Profile(BaseModel):
