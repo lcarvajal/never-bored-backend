@@ -78,7 +78,7 @@ async def get_modules(user: Annotated[dict, Depends(get_firebase_user_from_token
 
 @router.get("/roadmaps/{roadmap_name}/{module_id}")
 async def get_submodule(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str, module_id: int):
-    posthog.capture(user["uid"], 'view-submodule')
+    posthog.capture(user["uid"], 'view-submodule', { 'static_roadmap': roadmap_name, 'module_id': module_id })
     module_json = await download_blob(f'{roadmap_name}/{module_id}.json', "roadmaps")
     
     if module_json:
