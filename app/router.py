@@ -61,7 +61,7 @@ async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_tok
 @router.get("/roadmaps")
 async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
     """Gets the roadmap based on the learner profile"""
-    posthog.capture(user["uid"], 'view-roadmap')
+    posthog.capture(user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'/roadmaps'})
     uid = user["uid"]
     roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
 
@@ -71,6 +71,7 @@ async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_toke
 @router.get("/roadmaps/{roadmap_name}")
 async def get_modules(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str):
     """Gets the roadmap with modules"""
+    posthog.capture(user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'/roadmaps/{roadmap_name}'})
     roadmap_json = await download_blob(f'{roadmap_name}/outline.json', "roadmaps")
     
     if roadmap_json:
@@ -78,7 +79,7 @@ async def get_modules(user: Annotated[dict, Depends(get_firebase_user_from_token
 
 @router.get("/roadmaps/{roadmap_name}/{module_id}")
 async def get_submodule(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str, module_id: int):
-    posthog.capture(user["uid"], 'view-submodule', { 'static_roadmap': roadmap_name, 'module_id': module_id })
+    posthog.capture(user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'/roadmaps/{roadmap_name}/{module_id}'})
     module_json = await download_blob(f'{roadmap_name}/{module_id}.json', "roadmaps")
     
     if module_json:
