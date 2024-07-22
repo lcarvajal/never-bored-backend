@@ -14,6 +14,7 @@ posthog = Posthog(project_api_key=os.getenv('POSTHOG_API_KEY'), host='https://eu
 @router.get("/")
 def hello():
     """Hello world route to make sure the app is working correctly"""
+    posthog.capture('test_id', 'test_event')
     return {"msg": "Hello World!"}
 
 class Profile(BaseModel):
