@@ -30,6 +30,9 @@ def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], 
     file_content = json.dumps(profile.model_dump())
 
     upload_blob(file_name, file_content)
+
+    event_properties = {'$set': {'name': profile.name, 'email': profile.email, 'goal': profile.goal}}
+    posthog.capture(user["uid"], 'signup', event_properties)
     return {}
 
 @router.get("/profiles")
@@ -55,7 +58,6 @@ async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_tok
 
     upload_blob(file_name, json.dumps(roadmap))
     
-    posthog.capture(uid, 'signup')
     return roadmap
 
 @router.get("/roadmaps")
