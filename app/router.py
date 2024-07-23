@@ -33,7 +33,7 @@ def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_to
         raise HTTPException(status_code=400, detail="UUID already registered")
     else:
         event_properties = {'$set': {'name': user.name, 'email': user.email}}
-        posthog.capture(user["uid"], 'signup', event_properties)
+        posthog.capture(user.uid, 'signup', event_properties)
 
     return crud.create_user(db=db, user=user)
 
