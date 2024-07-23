@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from RoadmapSchema import Roadmap
+from app.schemas.roadmap_schema import Roadmap
 import uuid
 
 class UserBase(BaseModel):
