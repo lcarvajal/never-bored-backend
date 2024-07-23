@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated, List
 from app.authentication import get_firebase_user_from_token
-from app.llm import get_roadmap, get_categories
-from app.ragsearch import get_search_resources
+from app.utils import crud
+from app.utils.llm import get_roadmap, get_categories
+from app.utils.ragsearch import get_search_resources
 import json, os
 from pydantic import BaseModel
-from app.storage import upload_blob, download_blob
+from app.utils.storage import upload_blob, download_blob
 from posthog import Posthog
 from app.database import get_db, SessionLocal, engine
-from app import crud, schemas
+from app import schemas
 from sqlalchemy.orm import Session
 
 router = APIRouter()
