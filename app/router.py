@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
-from app.authentication import get_firebase_user_from_token
+from app.utils.authentication import get_firebase_user_from_token
 from app.utils import crud
 from app.utils.llm import get_roadmap, get_categories
 from app.utils.ragsearch import get_search_resources
