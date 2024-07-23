@@ -13,8 +13,11 @@ The backend for the Never Bored Learning Frontend.
 - Posthog
 - Langchain
 - Tavily search
+- SQLalchemy
+- Pytest
 
 ## Commands
 
 - `fastapi dev app/main.py`
 - `pip freeze > requirements.txt`
+- `pytest`

@@ -15,5 +15,5 @@ class User(UserBase):
   id: int
   roadmaps: list[Roadmap] = []
 
-  class Config:
+  class ConfigDict:
     from_attributes = True
