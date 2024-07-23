@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated, List
 from app.authentication import get_firebase_user_from_token
 from app.llm import get_roadmap, get_categories
@@ -7,6 +7,9 @@ import json, os
 from pydantic import BaseModel
 from app.storage import upload_blob, download_blob
 from posthog import Posthog
+from app.database import get_db, SessionLocal, engine
+from app import crud, schemas
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 posthog = Posthog(project_api_key=os.getenv('POSTHOG_API_KEY'), host='https://eu.i.posthog.com')
@@ -26,6 +29,24 @@ class Profile(BaseModel):
     email: str
     goal: str
     static_roadmaps: List[str]
+
+# New db Routes
+
+@router.post("/users/", response_model=schemas.User)
+def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+    if db_user:
+        raise HTTPException(status_code=400, detail="UUID already registered")
+    return crud.create_user(db=db, user=user)
+
+@router.get("/users/{user_id}", response_model=schemas.User)
+def read_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user_id: int, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
+
+# Old Blob Routes
 
 @router.post("/profiles")
 def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
