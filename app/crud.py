@@ -9,7 +9,7 @@ import uuid
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
-def get_user_by_uid(db: Session, authentication_service: str, uid: uuid):
+def get_user_by_uid(db: Session, authentication_service: str, uid: uuid.UUID):
     return db.query(models.User).filter(and_(models.User.uid == uid, models.User.authentication_service == authentication_service)).first()
 
 def create_user(db: Session, user: user_schema.UserCreate):

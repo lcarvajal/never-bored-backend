@@ -5,7 +5,7 @@ import uuid
 class UserBase(BaseModel):
   name: str
   email: str
-  uid: uuid
+  uid: uuid.UUID
   authentication_service: str
 
 class UserCreate(UserBase):
@@ -16,4 +16,4 @@ class User(UserBase):
   roadmaps: list[Roadmap] = []
 
   class Config:
-    orm_mode = True
+    from_attributes = True

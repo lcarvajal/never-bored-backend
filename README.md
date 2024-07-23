@@ -2,6 +2,10 @@
 
 The backend for the Never Bored Learning Frontend.
 
+## API Docs
+
+[Open docs](http://127.0.0.1:8000/docs)
+
 ## Techologies
 
 - FastAPI

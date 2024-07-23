@@ -32,14 +32,14 @@ class Profile(BaseModel):
 
 # New db Routes
 
-@router.post("/users/", response_model=schemas.UserSchema.User)
-def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user: schemas.UserSchema.UserCreate, db: Session = Depends(get_db)):
+@router.post("/users/", response_model=schemas.user_schema.User)
+def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user: schemas.user_schema.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
     if db_user:
         raise HTTPException(status_code=400, detail="UUID already registered")
     return crud.create_user(db=db, user=user)
 
-@router.get("/users/{user_id}", response_model=schemas.UserSchema.User)
+@router.get("/users/{user_id}", response_model=schemas.user_schema.User)
 def read_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user_id: int, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
     if db_user is None:

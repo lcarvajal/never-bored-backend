@@ -8,11 +8,11 @@ import json
 import base64
 from dotenv import load_dotenv
 from app import models
-from app.database import SessionLocal,engine
+from app.database import SessionLocal, engine, Base
 
 load_dotenv()
 
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.include_router(router)
