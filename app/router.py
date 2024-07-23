@@ -24,13 +24,6 @@ def hello():
     """Hello world route to make sure the app is working correctly"""
     return {"msg": "Hello World!"}
 
-class Profile(BaseModel):
-    uid: str
-    name: str
-    email: str
-    goal: str
-    static_roadmaps: List[str]
-
 # New db Routes
 
 @router.post("/users/", response_model=schemas.user_schema.User)
@@ -38,6 +31,10 @@ def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_to
     db_user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
     if db_user:
         raise HTTPException(status_code=400, detail="UUID already registered")
+    else:
+        event_properties = {'$set': {'name': user.name, 'email': user.email}}
+        posthog.capture(user["uid"], 'signup', event_properties)
+
     return crud.create_user(db=db, user=user)
 
 @router.get("/users/{user_id}", response_model=schemas.user_schema.User)
@@ -48,28 +45,6 @@ def read_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_toke
     return db_user
 
 # Old Blob Routes
-
-@router.post("/profiles")
-def post_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)], profile: Profile):
-    """Uploads profile to azure blob storage"""
-    file_name = f'profile-{user["uid"]}.json'
-    file_content = json.dumps(profile.model_dump())
-
-    upload_blob(file_name, file_content)
-
-    event_properties = {'$set': {'name': profile.name, 'email': profile.email, 'goal': profile.goal}}
-    posthog.capture(user["uid"], 'signup', event_properties)
-    return {}
-
-@router.get("/profiles")
-async def get_profiles(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
-    """Downloads profile from azure blob storage"""
-    file_name = f'profile-{user["uid"]}.json'
-    profile_json = await download_blob(file_name, "user-profile")
-    if profile_json:
-        return json.loads(profile_json)
-    else:
-        return {}
 
 @router.post("/roadmaps")
 async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
