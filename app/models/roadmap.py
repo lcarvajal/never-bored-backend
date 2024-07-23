@@ -1,5 +1,5 @@
 from app.database import Base
-from sqlalchemy import Column, Integer, String, TIMESTAMP, Boolean, text
+from sqlalchemy import ForeignKey, Column, Integer, String, TIMESTAMP, text
 from sqlalchemy.orm import relationship
 
 
@@ -8,7 +8,7 @@ class Roadmap(Base):
 
     id = Column(Integer,primary_key=True,nullable=False)
     title = Column(String,nullable=False)
-    goal = Column(String,nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
+    owner_id = Column(Integer, ForeignKey("users.id"))
 
-    roadmaps = relationship("User", back_populates="roadmaps")
+    owner = relationship("User", back_populates="roadmaps")

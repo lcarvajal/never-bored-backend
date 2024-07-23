@@ -7,12 +7,16 @@ import os
 import json
 import base64
 from dotenv import load_dotenv
-from app import models
-from app.database import SessionLocal, engine, Base
+from sqladmin import Admin, ModelView
+from app.database import engine, Base
+from app.models import user, roadmap
 
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
+# Drops all db tables...
+# for tbl in reversed(Base.metadata.sorted_tables):
+#     tbl.drop(engine)
 
 app = FastAPI()
 app.include_router(router)
@@ -40,3 +44,15 @@ if not firebase_service_account:
 service_account_info = json.loads(base64.b64decode(firebase_service_account))
 cred = firebase_admin.credentials.Certificate(service_account_info)
 firebase_admin.initialize_app(cred)
+
+# Set up Admin
+admin = Admin(app, engine)
+
+class UserAdmin(ModelView, model=user.User):
+    column_list = [user.User.id, user.User.name]
+
+class RoadmapAdmin(ModelView, model=roadmap.Roadmap):
+    column_list = [roadmap.Roadmap.id, roadmap.Roadmap.title]
+
+admin.add_view(UserAdmin)
+admin.add_view(RoadmapAdmin)
