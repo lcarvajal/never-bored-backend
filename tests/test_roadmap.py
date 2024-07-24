@@ -7,6 +7,7 @@ import uuid
 client = TestClient(app)
 
 TEST_UID = uuid.UUID('06335e84-2872-4914-8c5d-3ed07d2a2f16').hex
+TEST_ROADMAP_ID = 23
 TEST_MODULE_ID = 33
 
 async def override_get_firebase_user_from_token(q: str | None = None):
@@ -51,16 +52,17 @@ def test_create_roadmap():
   assert data["owner_id"], data["description"]
 
 
-def test_populate_module():
-  response = client.post("/populate/modules/" + str(TEST_MODULE_ID))
-  assert response.status_code == 200, response.text
-  data = response.json()
-  assert len(data) > 0
-  assert data[0]["position_in_module"] == 0
+# This is expensive to run... create a dummy response from tavily for testing before uncommenting.
+# def test_populate_module():
+#   response = client.post("/roadmaps/" + str(TEST_ROADMAP_ID) + "/modules/" + str(TEST_MODULE_ID) + "/populate")
+#   assert response.status_code == 200, response.text
+#   data = response.json()
+#   assert len(data) > 0
+#   assert data[0]["position_in_module"] == 0
 
-  response = client.get("modules/" + str(TEST_MODULE_ID))
-  assert response.status_code == 200, response.text
-  data = response.json()
-  assert data["submodules"][0]["position_in_module"] == 0
+#   response = client.get("modules/" + str(TEST_MODULE_ID))
+#   assert response.status_code == 200, response.text
+#   data = response.json()
+#   assert data["submodules"][0]["position_in_module"] == 0
 
 

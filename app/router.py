@@ -3,10 +3,9 @@ from typing import Annotated
 from app.utils.authentication import get_firebase_user_from_token
 from app.utils import crud
 from app.utils import llm
-from app.utils.ragsearch import get_search_resources
-import json, os
+from app.utils import ragsearch
+import os
 from pydantic import BaseModel
-from app.utils.storage import upload_blob, download_blob
 from posthog import Posthog
 from app.database import get_db
 from app import schemas
@@ -135,7 +134,7 @@ def get_roadmap_by_id_with_modules(firebase_user: Annotated[dict, Depends(get_fi
     return roadmap
 
 @router.get("/roadmaps/{roadmap_id}/modules/{module_id}")
-def get_module_by_id( module_id: int, db: Session = Depends(get_db)):
+def get_module_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], module_id: int, db: Session = Depends(get_db)):
     module = crud.get_module_by_id(db, module_id)
 
     if module is None:
@@ -145,10 +144,35 @@ def get_module_by_id( module_id: int, db: Session = Depends(get_db)):
 
 # Modules
 
+def get_resources_for_submodules(module_id: int, db):
+  module = crud.get_module_by_id_with_submodules(db, module_id)
+
+  if module is None:
+    raise HTTPException(status_code=404, detail="Module not found")
+
+  for submodule in module.submodules:
+    search_response = ragsearch.get_search_resources(submodule.description)
+    rag_resources = search_response["results"]
+    print(rag_resources)
+    for rag_resource in rag_resources:
+      print("resource retrieved")
+      print(rag_resource)
+      resource = schemas.roadmap_schema.ResourceCreate(
+        title=rag_resource["title"],
+        description=rag_resource["content"],
+        url=rag_resource["url"],
+        submodule_id=submodule.id,
+        type="article"
+      )
+      crud.create_resource(db, resource)
+
+      if resource is None:
+        raise HTTPException(status_code=500, detail="Error creating resource")
+
 @router.post("/roadmaps/{roadmap_id}/modules/{module_id}/populate")
-def update_module(module_id: int, db: Session = Depends(get_db)):
+async def update_module(module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     roadmap = crud.get_roadmap_by_id(db, module_id)
-    module = crud.get_module_by_id(db, module_id)
+    module = crud.get_module_by_id_with_submodules(db, module_id)
     
     if roadmap is None:
         raise HTTPException(status_code=404, detail="Roadmap not found")
@@ -176,4 +200,5 @@ def update_module(module_id: int, db: Session = Depends(get_db)):
         
         submodules.append(submodule)
 
+    background_tasks.add_task(get_resources_for_submodules, module.id, db)
     return submodules

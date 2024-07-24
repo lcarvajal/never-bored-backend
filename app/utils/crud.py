@@ -71,7 +71,7 @@ def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
 
 # Modules
 
-def get_module_by_id(db: Session, module_id: int):
+def get_module_by_id_with_submodules(db: Session, module_id: int):
     module = db.query(models.roadmap.Module).filter(models.roadmap.Module.id == module_id).first()
     submodules = db.query(models.roadmap.Submodule).filter(models.roadmap.Submodule.module_id == module_id).all()
 
