@@ -18,7 +18,6 @@ async def override_get_firebase_user_from_token(q: str | None = None):
 
 
 app.dependency_overrides[get_firebase_user_from_token] = override_get_firebase_user_from_token
-# app.dependency_overrides[get_db] = override_get_db
 
 def test_create_user():
   test_user = {
