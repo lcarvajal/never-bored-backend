@@ -22,6 +22,10 @@ def create_user(db: Session, user: user_schema.UserCreate):
 # Roadmaps
 
 def get_roadmap_by_id(db: Session, roadmap_id: int):
+    return db.query(models.roadmap.Roadmap).filter(models.roadmap.Roadmap.id == roadmap_id).first()
+
+
+def get_roadmap_by_id_with_modules(db: Session, roadmap_id: int):
     roadmap = db.query(models.roadmap.Roadmap).filter(models.roadmap.Roadmap.id == roadmap_id).first()
     modules = db.query(models.roadmap.Module).filter(models.roadmap.Module.roadmap_id == roadmap_id).all()
 
