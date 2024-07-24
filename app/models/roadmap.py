@@ -14,9 +14,21 @@ class Roadmap(Base):
 
     owner = relationship("User", back_populates="roadmaps")
     modules = relationship("Module", back_populates="roadmap")
+    follows = relationship("RoadmapFollow", back_populates="roadmap")
 
     def __repr__(self):
         return f'<Roadmap {self.title}>'
+    
+class RoadmapFollow(Base):
+    __tablename__ = "roadmap_follows"
+
+    id = Column(Integer,primary_key=True,nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    roadmap_id = Column(Integer, ForeignKey("roadmaps.id"), nullable=False)
+
+    user = relationship("User", back_populates="roadmap_follows")
+    roadmap = relationship("Roadmap", back_populates="follows")
 
 class Module(Base):
     __tablename__ = "modules"

@@ -14,6 +14,7 @@ class User(Base):
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
 
     roadmaps = relationship("Roadmap", back_populates="owner")
+    roadmap_follows = relationship("RoadmapFollow", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, name={self.name}, email={self.email})>"

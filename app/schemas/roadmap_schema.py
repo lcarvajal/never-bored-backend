@@ -1,34 +1,19 @@
 from pydantic import BaseModel
 
-# Roadmap
+# Resource
 
-class RoadmapBase(BaseModel):
+class ResourceBase(BaseModel):
   title: str
-  learning_goal: str
-
-class RoadmapCreate(RoadmapBase):
-  pass
-
-class Roadmap(RoadmapBase):
-  id: int
-  owner_id: int
-
-  class ConfigDict:
-    from_attributes = True
-
-# Module
-
-class ModuleBase(BaseModel):
-  name: str
   description: str
+  type: str
+  url: str
 
-class ModuleCreate(ModuleBase):
+class ResourceCreate(ResourceBase):
   pass
 
-class Module(ModuleBase):
+class Resource(ResourceBase):
   id: int
-  roadmap_id: int
-  position_in_roadmap: int
+  submodule_id: int
 
   class ConfigDict:
     from_attributes = True
@@ -46,24 +31,58 @@ class Submodule(SubmoduleBase):
   id: int
   module_id: int
   position_in_module: int
+  resources: list[Resource]
 
   class ConfigDict:
     from_attributes = True
 
-# Resource
+# Module
 
-class ResourceBase(BaseModel):
-  title: str
+class ModuleBase(BaseModel):
+  name: str
   description: str
-  type: str
-  url: str
 
-class ResourceCreate(ResourceBase):
+class ModuleCreate(ModuleBase):
   pass
 
-class Resource(ResourceBase):
+class Module(ModuleBase):
   id: int
-  submodule_id: int
+  roadmap_id: int
+  position_in_roadmap: int
+  submodules: list[Submodule]
+
+  class ConfigDict:
+    from_attributes = True
+
+# Roadmap Follow
+
+class RoadmapFollow(BaseModel):
+  roadmap_id: int
+  user_id: int
+
+class RoadmapFollowCreate(RoadmapFollow):
+  pass
+
+class RoadmapFollow(RoadmapFollow):
+  id: int
+
+  class ConfigDict:
+    from_attributes = True
+
+# Roadmap
+
+class RoadmapBase(BaseModel):
+  title: str
+  learning_goal: str
+
+class RoadmapCreate(RoadmapBase):
+  pass
+
+class Roadmap(RoadmapBase):
+  id: int
+  owner_id: int
+  modules: list[Module]
+  follows: list[RoadmapFollow]
 
   class ConfigDict:
     from_attributes = True

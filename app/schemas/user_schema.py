@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from app.schemas.roadmap_schema import Roadmap
+from app.schemas.roadmap_schema import Roadmap, RoadmapFollow
 import uuid
 
 class UserBase(BaseModel):
@@ -14,6 +14,7 @@ class UserCreate(UserBase):
 class User(UserBase):
   id: int
   roadmaps: list[Roadmap] = []
+  roadmap_follows: list[RoadmapFollow] = []
 
   class ConfigDict:
     from_attributes = True

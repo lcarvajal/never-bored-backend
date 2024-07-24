@@ -1,13 +1,11 @@
-from app.router import router
 from fastapi import FastAPI
-import firebase_admin
 from fastapi.middleware.cors import CORSMiddleware
-from app.config import get_settings
-import os
-import json
-import base64
+import os,json, base64
 from dotenv import load_dotenv
 from sqladmin import Admin, ModelView
+import firebase_admin
+from app.router import router
+from app.config import get_settings
 from app.database import engine, Base
 from app.models import user, roadmap
 
@@ -54,6 +52,9 @@ class UserAdmin(ModelView, model=user.User):
 class RoadmapAdmin(ModelView, model=roadmap.Roadmap):
     column_list = [roadmap.Roadmap.id, roadmap.Roadmap.title]
 
+class RoadmapFollowAdmin(ModelView, model=roadmap.RoadmapFollow):
+    column_list = [roadmap.RoadmapFollow.id, roadmap.RoadmapFollow.user_id, roadmap.RoadmapFollow.roadmap_id]
+
 class ModuleAdmin(ModelView, model=roadmap.Module):
     column_list = [roadmap.Module.id, roadmap.Module.title]
 
@@ -65,6 +66,7 @@ class ResourceAdmin(ModelView, model=roadmap.Resource):
 
 admin.add_view(UserAdmin)
 admin.add_view(RoadmapAdmin)
+admin.add_view(RoadmapFollowAdmin)
 admin.add_view(ModuleAdmin)
 admin.add_view(SubmoduleAdmin)
 admin.add_view(ResourceAdmin)
