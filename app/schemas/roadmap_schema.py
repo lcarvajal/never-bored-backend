@@ -7,21 +7,23 @@ class ResourceBase(BaseModel):
   description: str
   type: str
   url: str
+  submodule_id: int
 
 class ResourceCreate(ResourceBase):
   pass
 
 class Resource(ResourceBase):
   id: int
-  submodule_id: int
 
   class ConfigDict:
     from_attributes = True
 
 # Submodule
 class SubmoduleBase(BaseModel):
-  name: str
+  title: str
   description: str
+  module_id: int
+  position_in_module: int
   query: str
 
 class SubmoduleCreate(SubmoduleBase):
@@ -29,8 +31,6 @@ class SubmoduleCreate(SubmoduleBase):
 
 class Submodule(SubmoduleBase):
   id: int
-  module_id: int
-  position_in_module: int
   resources: list[Resource]
 
   class ConfigDict:
@@ -39,16 +39,16 @@ class Submodule(SubmoduleBase):
 # Module
 
 class ModuleBase(BaseModel):
-  name: str
+  title: str
   description: str
+  position_in_roadmap: int
+  roadmap_id: int
 
 class ModuleCreate(ModuleBase):
   pass
 
 class Module(ModuleBase):
   id: int
-  roadmap_id: int
-  position_in_roadmap: int
   submodules: list[Submodule]
 
   class ConfigDict:
@@ -74,13 +74,13 @@ class RoadmapFollow(RoadmapFollow):
 class RoadmapBase(BaseModel):
   title: str
   learning_goal: str
+  owner_id: int
 
 class RoadmapCreate(RoadmapBase):
   pass
 
 class Roadmap(RoadmapBase):
   id: int
-  owner_id: int
   modules: list[Module]
   follows: list[RoadmapFollow]
 

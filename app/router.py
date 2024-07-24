@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
 from app.utils.authentication import get_firebase_user_from_token
 from app.utils import crud
-from app.utils.llm import get_roadmap, get_categories
+from app.utils import llm
 from app.utils.ragsearch import get_search_resources
 import json, os
 from pydantic import BaseModel
@@ -44,68 +44,108 @@ def read_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_toke
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
-# Old Blob Routes
+class LearningGoal(BaseModel):
+    description: str
 
 @router.post("/roadmaps")
-async def post_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
-    """Creates a roadmap based on the learner profile"""
-    uid = user["uid"]
-    profile_json = await download_blob(f'profile-{uid}.json', "user-profile")
-    profile = json.loads(profile_json)
-    
-    learning_goal = profile["goal"]
-    file_name = f'roadmap-{uid}.json'
-    roadmap = get_roadmap(learning_goal)
+async def post_roadmaps(
+    firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)],
+    learning_goal: LearningGoal,
+    db: Session = Depends(get_db),
+) -> schemas.roadmap_schema.Roadmap:
+    """Creates a roadmap for the user and stores it in the database"""
+    user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
 
-    upload_blob(file_name, json.dumps(roadmap))
+    llm_roadmap = llm.get_roadmap(learning_goal.description)
+
+    roadmap = schemas.roadmap_schema.RoadmapCreate(
+        title="",
+        learning_goal=learning_goal.description,
+        owner_id=user.id,
+    )
+    created_roadmap = crud.create_roadmap(db=db, roadmap=roadmap)
+
+    if created_roadmap is None:
+        raise HTTPException(status_code=500, detail="Error creating roadmap")
     
-    return roadmap
+    roadmap_follow = schemas.roadmap_schema.RoadmapFollowCreate(
+        user_id=user.id,
+        roadmap_id=created_roadmap.id
+    )
+    created_roadmap_follow = crud.create_roadmap_follow(db=db, roadmap_follow=roadmap_follow)
+
+    if created_roadmap_follow is None:
+        raise HTTPException(status_code=500, detail="Error creating roadmap follow")
+
+    created_roadmap.modules = []
+
+    for index, llm_module in enumerate(llm_roadmap["modules"]):
+        module = schemas.roadmap_schema.ModuleCreate(
+            position_in_roadmap=index,
+            title=llm_module["title"],
+            description=llm_module["description"],
+            roadmap_id=created_roadmap.id
+        )
+        created_module = crud.create_module(db=db, module=module)
+
+        if created_module is None:
+            raise HTTPException(status_code=500, detail="Error creating module")
+
+        created_roadmap.modules.append(created_module)
+
+    return created_roadmap
 
 @router.get("/roadmaps")
-async def get_roadmaps(user: Annotated[dict, Depends(get_firebase_user_from_token)]):
-    """Gets the roadmap based on the learner profile"""
-    posthog.capture(user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'roadmaps'})
-    uid = user["uid"]
-    roadmap_json = await download_blob(f'roadmap-{uid}.json', "user-profile")
-
-    if roadmap_json:
-        return json.loads(roadmap_json)
+def get_roadmap_follows(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], db: Session = Depends(get_db)):
+    user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
     
-@router.get("/roadmaps/{roadmap_name}")
-async def get_modules(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str):
-    """Gets the roadmap with modules"""
-    posthog.capture(user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'roadmaps/{roadmap_name}'})
-    roadmap_json = await download_blob(f'{roadmap_name}/outline.json', "roadmaps")
+    roadmaps: list[schemas.roadmap_schema.Roadmap] = []
+    for follow in user.roadmap_follows:
+        roadmap = crud.get_roadmap_by_id(db, follow.roadmap_id)
+
+        if roadmap is None:
+            raise HTTPException(status_code=404, detail="Roadmap not found")
+
+        roadmaps.append(roadmap)
+
+    return roadmaps
+
+@router.get("/roadmaps/{roadmap_id}")
+def get_roadmap_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, db: Session = Depends(get_db)):
+    roadmap = crud.get_roadmap_by_id(db, roadmap_id)
+
+    if roadmap is None:
+        raise HTTPException(status_code=404, detail="Roadmap not found")
+
+    return roadmap
+
+@router.post("/populate/modules/{module_id}")
+def update_module(module_id: int, db: Session = Depends(get_db)):
+    module = crud.get_module_by_id(db, module_id)
     
-    if roadmap_json:
-        return json.loads(roadmap_json)
+    if module is None:
+        raise HTTPException(status_code=404, detail="Module not found")
 
-@router.get("/roadmaps/{roadmap_name}/{module_id}")
-async def get_submodule(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_name: str, module_id: int):
-    posthog.capture(user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'roadmaps/{roadmap_name}/{module_id}'})
-    module_json = await download_blob(f'{roadmap_name}/{module_id}.json', "roadmaps")
-    
-    if module_json:
-        return json.loads(module_json)
+    llm_submodules = llm.get_submodules(module)
 
+    for submodule_index, llm_submodule in enumerate(llm_submodules):
+        submodule = schemas.roadmap_schema.SubmoduleCreate(
+            position_in_module=submodule_index,
+            title=llm_submodule["title"],
+            description=llm_submodule["description"],
+            module_id=module.id,
+            query=llm_submodule["search_query_to_find_learning_resources"]
+        )
 
-class RoadmapItem(BaseModel):
-    learning_goal: str
-    name: str
-    description: str
+        created_submodule = crud.create_submodule(db=db, submodule=submodule)
 
-@router.post("/categories")
-async def post_categories(user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmapItem: RoadmapItem):
-    """Generates a list of categories for the current roadmap item"""
-    categories_response = get_categories(roadmapItem.learning_goal, roadmapItem.name, roadmapItem.description)
-    return categories_response
+        if created_submodule is None:
+            raise HTTPException(status_code=500, detail="Error creating submodule")
+        
+        module.submodules.append(created_submodule)
 
-class Topic(BaseModel):
-    description: str
-
-@router.post("/tasks")
-async def post_tasks(user: Annotated[dict, Depends(get_firebase_user_from_token)], topic: Topic):
-    """Creates a list of resources based on the topic"""
-    posthog.capture(user["uid"], 'view-submodule')
-    search_resources = get_search_resources(topic.description)
-    return search_resources
+    return module

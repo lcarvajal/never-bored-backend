@@ -21,12 +21,45 @@ def create_user(db: Session, user: user_schema.UserCreate):
 
 # Roadmaps
 
-def get_first_roadmap(db: Session, roadmap_id: int):
-    return db.query(models.roadmap).filter(models.roadmap.id == roadmap_id).first()
+def get_roadmap_by_id(db: Session, roadmap_id: int):
+    return db.query(models.roadmap.Roadmap).filter(models.roadmap.Roadmap.id == roadmap_id).first()
 
-def create_user_roadmap(db: Session, roadmap: roadmap_schema.RoadmapCreate, user_id: int):
-    db_roadmap = models.roadmap(**roadmap.model_dump(), owner_id=user_id)
+def create_roadmap(db: Session, roadmap: roadmap_schema.RoadmapCreate):
+    db_roadmap = models.roadmap.Roadmap(**roadmap.model_dump())
     db.add(db_roadmap)
     db.commit()
     db.refresh(db_roadmap)
     return db_roadmap
+
+def create_roadmap_follow(db: Session, roadmap_follow: roadmap_schema.RoadmapFollowCreate):
+    db_roadmap_follow = models.roadmap.RoadmapFollow(**roadmap_follow.model_dump())
+    db.add(db_roadmap_follow)
+    db.commit()
+    db.refresh(db_roadmap_follow)
+    return db_roadmap_follow
+
+def create_module(db: Session, module: roadmap_schema.ModuleCreate):
+    db_module = models.roadmap.Module(**module.model_dump())
+    db.add(db_module)
+    db.commit()
+    db.refresh(db_module)
+    return db_module
+
+def create_submodule(db: Session, submodule: roadmap_schema.SubmoduleCreate):
+    db_submodule = models.roadmap.Submodule(**submodule.model_dump())
+    db.add(db_submodule)
+    db.commit()
+    db.refresh(db_submodule)
+    return db_submodule
+
+def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
+    db_resource = models.roadmap.Resource(**resource.model_dump())
+    db.add(db_resource)
+    db.commit()
+    db.refresh(db_resource)
+    return db_resource
+
+# Modules
+
+def get_module_by_id(db: Session, module_id: int):
+    return db.query(models.roadmap.Module).filter(models.roadmap.Module.id == module_id).first()
