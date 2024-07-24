@@ -24,7 +24,7 @@ def hello():
     """Hello world route to make sure the app is working correctly"""
     return {"msg": "Hello World!"}
 
-# New db Routes
+# Users
 
 @router.post("/users/", response_model=schemas.user_schema.User)
 def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user: schemas.user_schema.UserCreate, db: Session = Depends(get_db)):
@@ -46,6 +46,8 @@ def read_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_toke
 
 class LearningGoal(BaseModel):
     description: str
+
+# Roadmaps
 
 @router.post("/roadmaps")
 async def post_roadmaps(
@@ -123,6 +125,8 @@ def get_roadmap_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_f
 
     return roadmap
 
+# Modules
+
 @router.post("/populate/modules/{module_id}")
 def update_module(module_id: int, db: Session = Depends(get_db)):
     module = crud.get_module_by_id(db, module_id)
@@ -147,5 +151,14 @@ def update_module(module_id: int, db: Session = Depends(get_db)):
             raise HTTPException(status_code=500, detail="Error creating submodule")
         
         module.submodules.append(created_submodule)
+
+    return module
+
+@router.get("/modules/{module_id}")
+def get_module_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], module_id: int, db: Session = Depends(get_db)):
+    module = crud.get_module_by_id(db, module_id)
+
+    if module is None:
+        raise HTTPException(status_code=404, detail="Module not found")
 
     return module
