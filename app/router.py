@@ -136,9 +136,11 @@ def update_module(module_id: int, db: Session = Depends(get_db)):
 
     llm_submodules = llm.get_submodules(module)
 
-    for submodule_index, llm_submodule in enumerate(llm_submodules):
+    submodules = []
+
+    for index, llm_submodule in enumerate(llm_submodules):
         submodule = schemas.roadmap_schema.SubmoduleCreate(
-            position_in_module=submodule_index,
+            position_in_module=index,
             title=llm_submodule["title"],
             description=llm_submodule["description"],
             module_id=module.id,
@@ -150,9 +152,9 @@ def update_module(module_id: int, db: Session = Depends(get_db)):
         if created_submodule is None:
             raise HTTPException(status_code=500, detail="Error creating submodule")
         
-        module.submodules.append(created_submodule)
+        submodules.append(submodule)
 
-    return module
+    return submodules
 
 @router.get("/modules/{module_id}")
 def get_module_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], module_id: int, db: Session = Depends(get_db)):

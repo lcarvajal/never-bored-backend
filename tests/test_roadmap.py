@@ -55,10 +55,8 @@ def test_populate_module():
   response = client.post("/populate/modules/" + str(TEST_MODULE_ID))
   assert response.status_code == 200, response.text
   data = response.json()
-  submodules = data["submodules"]
-  assert data["id"] == TEST_MODULE_ID
-  assert len(submodules) > 0
-  assert submodules[0]["position_in_module"] == 0
+  assert len(data) > 0
+  assert data[0]["position_in_module"] == 0
 
   response = client.get("modules/" + str(TEST_MODULE_ID))
   assert response.status_code == 200, response.text
