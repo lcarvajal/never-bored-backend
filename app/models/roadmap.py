@@ -15,6 +15,9 @@ class Roadmap(Base):
     owner = relationship("User", back_populates="roadmaps")
     modules = relationship("Module", back_populates="roadmap")
 
+    def __repr__(self):
+        return f'<Roadmap {self.title}>'
+
 class Module(Base):
     __tablename__ = "modules"
 
@@ -27,6 +30,9 @@ class Module(Base):
 
     roadmap = relationship("Roadmap", back_populates="modules")
     submodules = relationship("Submodule", back_populates="module")
+
+    def __repr__(self):
+        return f'<Module {self.title}>'
 
 class Submodule(Base):
     __tablename__ = "submodules"
@@ -42,6 +48,9 @@ class Submodule(Base):
     module = relationship("Module", back_populates="submodules")
     resources = relationship("Resource", back_populates="submodule")
 
+    def __repr__(self):
+        return f'<Submodule {self.title}>'
+
 class Resource(Base):
     __tablename__ = "resources"
 
@@ -54,3 +63,6 @@ class Resource(Base):
     submodule_id = Column(Integer, ForeignKey("submodules.id"))
 
     submodule = relationship("Submodule", back_populates="resources")
+
+    def __repr__(self):
+        return f'<Resource {self.title}>'
