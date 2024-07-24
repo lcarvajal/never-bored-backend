@@ -135,7 +135,7 @@ def get_roadmap_by_id_with_modules(firebase_user: Annotated[dict, Depends(get_fi
 
 @router.get("/roadmaps/{roadmap_id}/modules/{module_id}")
 def get_module_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], module_id: int, db: Session = Depends(get_db)):
-    module = crud.get_module_by_id(db, module_id)
+    module = crud.get_module_by_id_with_submodules(db, module_id)
 
     if module is None:
         raise HTTPException(status_code=404, detail="Module not found")

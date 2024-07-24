@@ -65,4 +65,9 @@ def test_create_roadmap():
 #   data = response.json()
 #   assert data["submodules"][0]["position_in_module"] == 0
 
-
+def test_get_module():
+  response = client.get("/roadmaps/" + str(TEST_ROADMAP_ID) + "/modules/" + str(TEST_MODULE_ID))
+  assert response.status_code == 200, response.text
+  data = response.json()
+  assert data["submodules"][0]["position_in_module"] == 0
+  assert data["submodules"][0]["title"]
