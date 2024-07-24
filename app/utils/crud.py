@@ -22,7 +22,13 @@ def create_user(db: Session, user: user_schema.UserCreate):
 # Roadmaps
 
 def get_roadmap_by_id(db: Session, roadmap_id: int):
-    return db.query(models.roadmap.Roadmap).filter(models.roadmap.Roadmap.id == roadmap_id).first()
+    roadmap = db.query(models.roadmap.Roadmap).filter(models.roadmap.Roadmap.id == roadmap_id).first()
+    modules = db.query(models.roadmap.Module).filter(models.roadmap.Module.roadmap_id == roadmap_id).all()
+
+    roadmap.modules = modules
+
+    return roadmap
+
 
 def create_roadmap(db: Session, roadmap: roadmap_schema.RoadmapCreate):
     db_roadmap = models.roadmap.Roadmap(**roadmap.model_dump())
@@ -62,17 +68,8 @@ def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
 # Modules
 
 def get_module_by_id(db: Session, module_id: int):
-    module = db.query(
-        models.roadmap.Module
-    ).filter(
-        models.roadmap.Module.id == module_id
-    ).first()
-
-    submodules = db.query(
-        models.roadmap.Submodule
-    ).filter(
-        models.roadmap.Submodule.module_id == module_id
-    ).all()
+    module = db.query(models.roadmap.Module).filter(models.roadmap.Module.id == module_id).first()
+    submodules = db.query(models.roadmap.Submodule).filter(models.roadmap.Submodule.module_id == module_id).all()
 
     module.submodules = submodules
 
