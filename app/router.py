@@ -157,7 +157,7 @@ def update_module(module_id: int, db: Session = Depends(get_db)):
     return submodules
 
 @router.get("/modules/{module_id}")
-def get_module_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], module_id: int, db: Session = Depends(get_db)):
+def get_module_by_id( module_id: int, db: Session = Depends(get_db)):
     module = crud.get_module_by_id(db, module_id)
 
     if module is None:
