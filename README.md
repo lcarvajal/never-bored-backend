@@ -21,3 +21,11 @@ The backend for the Never Bored Learning Frontend.
 - `fastapi dev app/main.py`
 - `pip freeze > requirements.txt`
 - `pytest`
+
+### Docker
+- `docker images`
+- `docker logs`
+- `docker ps -a`
+- Check running and exited containters `docker ps -a`
+- `docker build --tag never-bored-backend .`
+- `docker run --detach --publish 3100:3100 --env-file .env never-bored-backend`
