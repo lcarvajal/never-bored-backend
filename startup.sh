@@ -1,7 +1,14 @@
 #!/bin/sh
 
 # Export all environment variables safely
-printenv | awk -F= '{ print "export " $1 "=\"" $2 "\"" }' > /etc/profile.d/env.sh
+printenv | while IFS= read -r line; do
+    key=$(echo "$line" | cut -d '=' -f 1)
+    value=$(echo "$line" | cut -d '=' -f 2-)
+    # Ensure the key is valid and the value is quoted properly
+    if [ -n "$key" ] && [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+        echo "export $key=\"$value\"" >> /etc/profile.d/env.sh
+    fi
+done
 
 # Source the environment variables
 . /etc/profile.d/env.sh
