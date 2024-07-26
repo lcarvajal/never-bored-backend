@@ -2,14 +2,13 @@ from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from app import models
 from app.schemas import user_schema, roadmap_schema
-import uuid
 
 # Users
 
 def get_user(db: Session, user_id: int):
     return db.query(models.user.User).filter(models.user.User.id == user_id).first()
 
-def get_user_by_uid(db: Session, authentication_service: str, uid: uuid.UUID):
+def get_user_by_uid(db: Session, authentication_service: str, uid: str):
     return db.query(models.user.User).filter(and_(models.user.User.uid == uid, models.user.User.authentication_service == authentication_service)).first()
 
 def create_user(db: Session, user: user_schema.UserCreate):

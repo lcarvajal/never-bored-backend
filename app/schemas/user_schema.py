@@ -1,11 +1,10 @@
 from pydantic import BaseModel
 from app.schemas.roadmap_schema import Roadmap, RoadmapFollow
-import uuid
 
 class UserBase(BaseModel):
   name: str
   email: str
-  uid: uuid.UUID
+  uid: str
   authentication_service: str
 
 class UserCreate(UserBase):

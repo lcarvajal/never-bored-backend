@@ -7,7 +7,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer,primary_key=True,nullable=False)
-    uid = Column(UUID(as_uuid=True),nullable=False)
+    uid = Column(String,nullable=False)
     authentication_service = Column(String,nullable=False)
     name = Column(String,nullable=False)
     email = Column(String,nullable=False)
