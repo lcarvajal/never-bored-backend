@@ -13,13 +13,14 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 # Copy the rest of the application code
 COPY . .
 
-# Create the startup script
-RUN echo '#!/bin/sh' > /code/startup.sh && \
-  echo 'eval $(printenv | sed -n "s/^\([^=]\+\)=\(.*\)$/export \1='\''\2'\''/p")' >> /code/startup.sh && \
-  chmod +x /code/startup.sh
+# Copy the startup script
+COPY startup.sh /code/startup.sh
+
+# Ensure the startup script is executable
+RUN chmod +x /code/startup.sh
 
 # Expose the port the app runs on
 EXPOSE 8000
 
-# Command to run the application
-CMD ["/bin/sh", "-c", "/code/startup.sh && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# Run the startup script
+CMD ["/code/startup.sh"]
