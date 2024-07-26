@@ -25,7 +25,7 @@ def hello():
 
 # Users
 
-@router.post("/users/", response_model=schemas.user_schema.User)
+@router.post("/users", response_model=schemas.user_schema.User)
 def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user: schemas.user_schema.UserCreate, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
     if db_user:
@@ -141,6 +141,25 @@ def get_module_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_fr
         raise HTTPException(status_code=404, detail="Module not found")
 
     return module
+
+# Roadmap follows
+
+@router.post("/roadmaps/{roadmap_id}/follow")
+def follow_roadmap(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, db: Session = Depends(get_db)):
+    user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    roadmap_follow = schemas.roadmap_schema.RoadmapFollowCreate(
+        user_id=user.id,
+        roadmap_id=roadmap_id
+    )
+    created_roadmap_follow = crud.create_roadmap_follow(db=db, roadmap_follow=roadmap_follow)
+
+    if created_roadmap_follow is None:
+        raise HTTPException(status_code=500, detail="Error creating roadmap follow")
+
+    return created_roadmap_follow
 
 # Modules
 
