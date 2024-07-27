@@ -62,7 +62,7 @@ async def post_roadmaps(
     llm_roadmap = llm.get_roadmap(learning_goal.description)
 
     roadmap = schemas.roadmap_schema.RoadmapCreate(
-        title="",
+        title=llm_roadmap["title"],
         learning_goal=learning_goal.description,
         owner_id=user.id,
     )
@@ -189,8 +189,8 @@ def get_resources_for_submodules(module_id: int, db):
         raise HTTPException(status_code=500, detail="Error creating resource")
 
 @router.post("/roadmaps/{roadmap_id}/modules/{module_id}/populate")
-async def update_module(module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    roadmap = crud.get_roadmap_by_id(db, module_id)
+async def populate_module_with_submodules_and_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    roadmap = crud.get_roadmap_by_id(db, roadmap_id)
     module = crud.get_module_by_id_with_submodules(db, module_id)
     
     if roadmap is None:
