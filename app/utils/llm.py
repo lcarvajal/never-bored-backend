@@ -56,17 +56,18 @@ def get_submodules(module: schemas.roadmap_schema.Module):
 def get_query_to_find_learning_resources(roadmap_title: str, module_description: str, submodule_description: str):
     model = ChatOpenAI()
 
-    class Query(BaseModel):
-        query: str
+    class LearnResourcesQuery(BaseModel):
+        learnResourcesQuery: str
 
-    parser = JsonOutputParser(pydantic_object=Query)
+    parser = JsonOutputParser(pydantic_object=LearnResourcesQuery)
 
     prompt = PromptTemplate(
-        template="A user is learning the following. Create a search query that will be used to find learning resources for the sub module. \n\n\nStudy plan: {roadmap_title}\n\nModule: {module_description}\n\n Sub module: {submodule_description}\n",
+        template="A user is learning the following. Create a search query that will be used to find learning resources for the sub module.\n{format_instructions}\nStudy plan: {roadmap_title}\nModule: {module_description}\n Sub module: {submodule_description}",
         input_variables=["roadmap_title", "module_description", "submodule_description"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
+        partial_variables={"format_instructions": parser.get_format_instructions()}
     )
 
     chain = prompt | model | parser
     query = chain.invoke({"roadmap_title": roadmap_title, "module_description": module_description, "submodule_description": submodule_description})
-    return query["query"]
+
+    return query["learnResourcesQuery"]

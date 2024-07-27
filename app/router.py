@@ -10,6 +10,10 @@ from posthog import Posthog
 from app.database import get_db
 from app import schemas
 from sqlalchemy.orm import Session
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 posthog = Posthog(project_api_key=os.getenv('POSTHOG_API_KEY'), host='https://eu.i.posthog.com')
@@ -163,19 +167,34 @@ def follow_roadmap(firebase_user: Annotated[dict, Depends(get_firebase_user_from
 
 # Modules
 
-def create_resources_using_ragsearch_for_submodule(roadmap_title: str, module_description: str, submodule_id: int, db):
+def create_resources_using_ragsearch_for_submodule(roadmap_title, module_description, submodule_id, db):
     submodule = crud.get_submodule_by_id_with_resources(db, submodule_id)
+
+    if submodule is None:
+        raise HTTPException(status_code=404, detail="Submodule not found")
 
     if len(submodule.resources) > 0:
         print("Submodule already populated")
         return
     
-    query = llm.get_query_to_find_learning_resources(roadmap_title=roadmap_title, module_description=module_description, submodule_description=submodule.description)
+    logger.info("WHAT IS GOING ON ")
+    logger.info(submodule)
+    logger.info("WHAT IS GOING ON ")
+    logger.info(submodule.description)
+    logger.info("WHAT IS GOING ON ")
+    # logger.info(module_description)
+    logger.info("WHAT IS GOING ON ")
+    logger.info(roadmap_title)
+    logger.info("WHAT IS GOING ON ")
+    query = llm.get_query_to_find_learning_resources(roadmap_title, module_description, submodule_description=submodule.description)
+    logger.info(query)
     search_response = ragsearch.get_search_resources(query)
     rag_resources = search_response["results"]
     resources = []
 
     for rag_resource in rag_resources:
+      logger.info("Createing resource")
+      logger.info(rag_resource)
       resource = schemas.roadmap_schema.ResourceCreate(
         title=rag_resource["title"],
         description=rag_resource["content"],
@@ -190,26 +209,30 @@ def create_resources_using_ragsearch_for_submodule(roadmap_title: str, module_de
       
       resources.append(resource)
 
-    return resources
+    return []
 
 def create_resources_using_ragsearch_for_module(roadmap_title, module_id, db):
   module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
+
+  if module is None:
+    raise HTTPException(status_code=404, detail="Module not found")
+  
   for submodule in module.submodules:
-    create_resources_using_ragsearch_for_submodule(roadmap_title, module.decription, submodule.id, db)
+    create_resources_using_ragsearch_for_submodule(roadmap_title, module.description, submodule.id, db)
 
 @router.post("/roadmaps/{roadmap_id}/modules/{module_id}/populate")
 async def populate_module_with_submodules_and_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     roadmap = crud.get_roadmap_by_id(db, roadmap_id)
     module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
-
-    if len(module.submodules) > 0:
-        raise HTTPException(status_code=400, detail="Module already populated")
     
     if roadmap is None:
         raise HTTPException(status_code=404, detail="Roadmap not found")
 
     if module is None:
         raise HTTPException(status_code=404, detail="Module not found")
+    
+    if len(module.submodules) > 0:
+        raise HTTPException(status_code=400, detail="Module already populated")
 
     llm_submodules = llm.get_submodules(module)
 
