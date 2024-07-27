@@ -19,7 +19,7 @@ The backend for the Never Bored Learning Frontend.
 ## Commands
 
 - Change database host to @localhost:5432/never_bored
-- `fastapi dev app/main.py`
+- Startup script: `./startup.sh`
 - `pip freeze > requirements.txt`
 - `pytest`
 
@@ -50,3 +50,15 @@ Helpers
 ## Database
 
 - `psql --host=neverboredserver.postgres.database.azure.com --port=5432 --username=myadmin  --dbname=postgres sslmode=require`
+
+## Generate local SSL
+
+- `uvicorn app.main:app --host 0.0.0.0 --port 443 --ssl-keyfile=certs/key.pem --ssl-certfile=certs/cert.pem`
+
+On macOS:
+
+1. Open the Keychain Access application.
+2. Go to File > Import Items and import the cert.pem file in System Keychain.
+3. Find the certificate in the list, right-click on it, and select Get Info.
+4. Expand the Trust section and select Always Trust for When using this
+   certificate.
