@@ -56,14 +56,20 @@ def create_module(db: Session, module: roadmap_schema.ModuleCreate):
     db.refresh(db_module)
     return db_module
 
+def get_module_by_id(db: Session, module_id: int):
+    return db.query(models.roadmap.Module).filter(models.roadmap.Module.id == module_id).first()
+
 def get_module_by_id_with_submodules_and_resources(db: Session, module_id: int):
     module = db.query(models.roadmap.Module).filter(models.roadmap.Module.id == module_id).first()
     submodules = db.query(models.roadmap.Submodule).filter(models.roadmap.Submodule.module_id == module_id).all()
 
-    for submodule in submodules:
-        submodule.resources = db.query(models.roadmap.Resource).filter(models.roadmap.Resource.submodule_id == submodule.id).all()
+    if len(submodules) > 0:
+        for submodule in submodules:
+            submodule.resources = db.query(models.roadmap.Resource).filter(models.roadmap.Resource.submodule_id == submodule.id).all()
 
-    module.submodules = submodules
+        module.submodules = submodules
+    else:
+        module.submodules = []
 
     return module
 

@@ -9,19 +9,19 @@ from app import schemas
 def get_roadmap(learning_goal: str):
     model = ChatOpenAI()
 
-    class Module(BaseModel):
+    class Topic(BaseModel):
         title: str
         description: str
 
     class StudyPlan(BaseModel):
         learning_goal: str
         title: str
-        modules: List[Module]
+        modules: List[Topic]
 
     parser = JsonOutputParser(pydantic_object=StudyPlan)
 
     prompt = PromptTemplate(
-        template="Break down the learning goal into a study plan. First, list all the topics required to master the learning goal. Then organize them into modules: \n{format_instructions}\n{learning_goal}\n",
+        template="Create a study plan by listing all the topics required to master the learning goal. The title should describe the topic (ex. 'Basic Music Theory'). The description should give more info on the topic (ex. Understanding notes, scales, and rhythm): \n{format_instructions}\n{learning_goal}\n",
         input_variables=["learning_goal"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
@@ -52,3 +52,21 @@ def get_submodules(module: schemas.roadmap_schema.Module):
     chain = prompt | model | parser
     module = chain.invoke({"module": module})
     return module["submodules"]
+
+def get_query_to_find_learning_resources(roadmap_title: str, module_description: str, submodule_description: str):
+    model = ChatOpenAI()
+
+    class Query(BaseModel):
+        query: str
+
+    parser = JsonOutputParser(pydantic_object=Query)
+
+    prompt = PromptTemplate(
+        template="A user is learning the following. Create a search query that will be used to find learning resources for the sub module. \n\n\nStudy plan: {roadmap_title}\n\nModule: {module_description}\n\n Sub module: {submodule_description}\n",
+        input_variables=["roadmap_title", "module_description", "submodule_description"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+    )
+
+    chain = prompt | model | parser
+    query = chain.invoke({"roadmap_title": roadmap_title, "module_description": module_description, "submodule_description": submodule_description})
+    return query["query"]
