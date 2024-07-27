@@ -61,6 +61,8 @@ def create_submodule(db: Session, submodule: roadmap_schema.SubmoduleCreate):
     db.refresh(db_submodule)
     return db_submodule
 
+# Resources
+
 def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
     db_resource = models.roadmap.Resource(**resource.model_dump())
     db.add(db_resource)
@@ -68,9 +70,12 @@ def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
     db.refresh(db_resource)
     return db_resource
 
+def get_first_resource_by_submodule_id(db: Session, submodule_id: int):
+    return db.query(models.roadmap.Resource).filter(models.roadmap.Resource.submodule_id == submodule_id).first()
+
 # Modules
 
-def get_module_by_id_with_submodules(db: Session, module_id: int):
+def get_module_by_id_with_submodules_and_resources(db: Session, module_id: int):
     module = db.query(models.roadmap.Module).filter(models.roadmap.Module.id == module_id).first()
     submodules = db.query(models.roadmap.Submodule).filter(models.roadmap.Submodule.module_id == module_id).all()
 

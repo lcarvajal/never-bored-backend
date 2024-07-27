@@ -135,7 +135,7 @@ def get_roadmap_by_id_with_modules(firebase_user: Annotated[dict, Depends(get_fi
 
 @router.get("/roadmaps/{roadmap_id}/modules/{module_id}")
 def get_module_by_id(module_id: int, db: Session = Depends(get_db)):
-    module = crud.get_module_by_id_with_submodules(db, module_id)
+    module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
 
     if module is None:
         raise HTTPException(status_code=404, detail="Module not found")
@@ -163,13 +163,18 @@ def follow_roadmap(firebase_user: Annotated[dict, Depends(get_firebase_user_from
 
 # Modules
 
-def get_resources_for_submodules(module_id: int, db):
-  module = crud.get_module_by_id_with_submodules(db, module_id)
+def create_resources_using_ragsearch_for_submodules(module_id: int, db):
+  module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
 
   if module is None:
     raise HTTPException(status_code=404, detail="Module not found")
 
   for submodule in module.submodules:
+    first_resource = crud.get_first_resource_by_submodule_id(db, submodule.id)
+
+    if first_resource:
+        raise HTTPException(status_code=400, detail=f'Resources already created for submodule {submodule.id}')
+    
     search_response = ragsearch.get_search_resources(submodule.description)
     rag_resources = search_response["results"]
     print(rag_resources)
@@ -191,7 +196,7 @@ def get_resources_for_submodules(module_id: int, db):
 @router.post("/roadmaps/{roadmap_id}/modules/{module_id}/populate")
 async def populate_module_with_submodules_and_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     roadmap = crud.get_roadmap_by_id(db, roadmap_id)
-    module = crud.get_module_by_id_with_submodules(db, module_id)
+    module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
 
     if len(module.submodules) > 0:
         raise HTTPException(status_code=400, detail="Module already populated")
@@ -222,5 +227,5 @@ async def populate_module_with_submodules_and_resources(firebase_user: Annotated
         
         submodules.append(submodule)
 
-    background_tasks.add_task(get_resources_for_submodules, module.id, db)
+    background_tasks.add_task(create_resources_using_ragsearch_for_submodules, module.id, db)
     return submodules
