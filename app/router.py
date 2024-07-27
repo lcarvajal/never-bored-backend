@@ -134,7 +134,7 @@ def get_roadmap_by_id_with_modules(firebase_user: Annotated[dict, Depends(get_fi
     return roadmap
 
 @router.get("/roadmaps/{roadmap_id}/modules/{module_id}")
-def get_module_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], module_id: int, db: Session = Depends(get_db)):
+def get_module_by_id(module_id: int, db: Session = Depends(get_db)):
     module = crud.get_module_by_id_with_submodules(db, module_id)
 
     if module is None:
@@ -192,6 +192,9 @@ def get_resources_for_submodules(module_id: int, db):
 async def populate_module_with_submodules_and_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     roadmap = crud.get_roadmap_by_id(db, roadmap_id)
     module = crud.get_module_by_id_with_submodules(db, module_id)
+
+    if len(module.submodules) > 0:
+        raise HTTPException(status_code=400, detail="Module already populated")
     
     if roadmap is None:
         raise HTTPException(status_code=404, detail="Roadmap not found")
