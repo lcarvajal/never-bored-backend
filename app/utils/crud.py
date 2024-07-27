@@ -47,33 +47,14 @@ def create_roadmap_follow(db: Session, roadmap_follow: roadmap_schema.RoadmapFol
     db.refresh(db_roadmap_follow)
     return db_roadmap_follow
 
+# Modules
+
 def create_module(db: Session, module: roadmap_schema.ModuleCreate):
     db_module = models.roadmap.Module(**module.model_dump())
     db.add(db_module)
     db.commit()
     db.refresh(db_module)
     return db_module
-
-def create_submodule(db: Session, submodule: roadmap_schema.SubmoduleCreate):
-    db_submodule = models.roadmap.Submodule(**submodule.model_dump())
-    db.add(db_submodule)
-    db.commit()
-    db.refresh(db_submodule)
-    return db_submodule
-
-# Resources
-
-def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
-    db_resource = models.roadmap.Resource(**resource.model_dump())
-    db.add(db_resource)
-    db.commit()
-    db.refresh(db_resource)
-    return db_resource
-
-def get_first_resource_by_submodule_id(db: Session, submodule_id: int):
-    return db.query(models.roadmap.Resource).filter(models.roadmap.Resource.submodule_id == submodule_id).first()
-
-# Modules
 
 def get_module_by_id_with_submodules_and_resources(db: Session, module_id: int):
     module = db.query(models.roadmap.Module).filter(models.roadmap.Module.id == module_id).first()
@@ -85,3 +66,26 @@ def get_module_by_id_with_submodules_and_resources(db: Session, module_id: int):
     module.submodules = submodules
 
     return module
+
+# Submodules
+
+def create_submodule(db: Session, submodule: roadmap_schema.SubmoduleCreate):
+    db_submodule = models.roadmap.Submodule(**submodule.model_dump())
+    db.add(db_submodule)
+    db.commit()
+    db.refresh(db_submodule)
+    return db_submodule
+
+def get_submodule_by_id_with_resources(db: Session, submodule_id: int):
+    submodule = db.query(models.roadmap.Submodule).filter(models.roadmap.Submodule.id == submodule_id).first()
+    submodule.resources = db.query(models.roadmap.Resource).filter(models.roadmap.Resource.submodule_id == submodule_id).all()
+    return submodule
+
+# Resources
+
+def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
+    db_resource = models.roadmap.Resource(**resource.model_dump())
+    db.add(db_resource)
+    db.commit()
+    db.refresh(db_resource)
+    return db_resource

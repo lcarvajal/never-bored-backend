@@ -163,24 +163,18 @@ def follow_roadmap(firebase_user: Annotated[dict, Depends(get_firebase_user_from
 
 # Modules
 
-def create_resources_using_ragsearch_for_submodules(module_id: int, db):
-  module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
+def create_resources_using_ragsearch_for_submodule(submodule_id, db):
+    submodule = crud.get_submodule_by_id_with_resources(db, submodule_id)
 
-  if module is None:
-    raise HTTPException(status_code=404, detail="Module not found")
-
-  for submodule in module.submodules:
-    first_resource = crud.get_first_resource_by_submodule_id(db, submodule.id)
-
-    if first_resource:
-        raise HTTPException(status_code=400, detail=f'Resources already created for submodule {submodule.id}')
+    if len(submodule.resources) > 0:
+        print("Submodule already populated")
+        return
     
     search_response = ragsearch.get_search_resources(submodule.description)
     rag_resources = search_response["results"]
-    print(rag_resources)
+    resources = []
+
     for rag_resource in rag_resources:
-      print("resource retrieved")
-      print(rag_resource)
       resource = schemas.roadmap_schema.ResourceCreate(
         title=rag_resource["title"],
         description=rag_resource["content"],
@@ -188,10 +182,19 @@ def create_resources_using_ragsearch_for_submodules(module_id: int, db):
         submodule_id=submodule.id,
         type="article"
       )
-      crud.create_resource(db, resource)
+      resource = crud.create_resource(db, resource)
 
       if resource is None:
         raise HTTPException(status_code=500, detail="Error creating resource")
+      
+      resources.append(resource)
+
+    return resources
+
+def create_resources_using_ragsearch_for_module(module_id, db):
+  module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
+  for submodule in module.submodules:
+    create_resources_using_ragsearch_for_submodule(submodule, db)
 
 @router.post("/roadmaps/{roadmap_id}/modules/{module_id}/populate")
 async def populate_module_with_submodules_and_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
@@ -227,5 +230,22 @@ async def populate_module_with_submodules_and_resources(firebase_user: Annotated
         
         submodules.append(submodule)
 
-    background_tasks.add_task(create_resources_using_ragsearch_for_submodules, module.id, db)
+    background_tasks.add_task(create_resources_using_ragsearch_for_module, module.id, db)
     return submodules
+
+# Submodules
+@router.post("/submodules/{submodule_id}/populate")
+def populate_submodule_with_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], submodule_id: int, db: Session = Depends(get_db)):
+    print("heya")
+    submodule = crud.get_submodule_by_id_with_resources(db, submodule_id)
+
+    if submodule is None:
+        raise HTTPException(status_code=404, detail="Submodule not found")
+    
+    if len(submodule.resources) > 0:
+        raise HTTPException(status_code=400, detail="Submodule already populated")
+    
+    resources = create_resources_using_ragsearch_for_submodule(submodule.id, db)
+
+    return resources
+
