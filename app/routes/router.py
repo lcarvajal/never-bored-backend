@@ -16,11 +16,13 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-posthog = Posthog(project_api_key=os.getenv('POSTHOG_API_KEY'), host='https://eu.i.posthog.com')
+posthog = Posthog(project_api_key=os.getenv(
+    'POSTHOG_API_KEY'), host='https://eu.i.posthog.com')
 
 if os.getenv('ENV') == 'dev':
     # posthog.debug = True
     posthog.disabled = True
+
 
 @router.get("/")
 def hello():
@@ -28,6 +30,7 @@ def hello():
     return {"msg": "Welcome to the never bored learning api!"}
 
 # Users
+
 
 @router.post("/users", response_model=schemas.user_schema.User)
 def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user: schemas.user_schema.UserCreate, db: Session = Depends(get_db)):
@@ -40,6 +43,7 @@ def create_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_to
 
     return crud.create_user(db=db, user=user)
 
+
 @router.get("/users/{user_id}", response_model=schemas.user_schema.User)
 def read_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], user_id: int, db: Session = Depends(get_db)):
     db_user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
@@ -47,10 +51,37 @@ def read_user(firebase_user: Annotated[dict, Depends(get_firebase_user_from_toke
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
 
+
 class LearningGoal(BaseModel):
     description: str
 
+# Payment Gateway
+
+
+@router.post("/checkout")
+def create_checkout_session(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    # Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+                    'price': '{{PRICE_ID}}',
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url=YOUR_DOMAIN + '?success=true',
+            cancel_url=YOUR_DOMAIN + '?canceled=true',
+            automatic_tax={'enabled': True},
+        )
+    except Exception as e:
+        return str(e)
+
+    return redirect(checkout_session.url, code=303)
+
+
 # Roadmaps
+
 
 @router.post("/roadmaps")
 async def post_roadmaps(
@@ -74,15 +105,17 @@ async def post_roadmaps(
 
     if created_roadmap is None:
         raise HTTPException(status_code=500, detail="Error creating roadmap")
-    
+
     roadmap_follow = schemas.roadmap_schema.RoadmapFollowCreate(
         user_id=user.id,
         roadmap_id=created_roadmap.id
     )
-    created_roadmap_follow = crud.create_roadmap_follow(db=db, roadmap_follow=roadmap_follow)
+    created_roadmap_follow = crud.create_roadmap_follow(
+        db=db, roadmap_follow=roadmap_follow)
 
     if created_roadmap_follow is None:
-        raise HTTPException(status_code=500, detail="Error creating roadmap follow")
+        raise HTTPException(
+            status_code=500, detail="Error creating roadmap follow")
 
     created_roadmap.modules = []
 
@@ -96,11 +129,13 @@ async def post_roadmaps(
         created_module = crud.create_module(db=db, module=module)
 
         if created_module is None:
-            raise HTTPException(status_code=500, detail="Error creating module")
+            raise HTTPException(
+                status_code=500, detail="Error creating module")
 
         created_roadmap.modules.append(created_module)
 
     return created_roadmap
+
 
 @router.get("/roadmaps")
 def get_roadmap_follows(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], db: Session = Depends(get_db)):
@@ -108,7 +143,7 @@ def get_roadmap_follows(firebase_user: Annotated[dict, Depends(get_firebase_user
     user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     roadmaps: list[schemas.roadmap_schema.Roadmap] = []
     for follow in user.roadmap_follows:
         roadmap = crud.get_roadmap_by_id(db, follow.roadmap_id)
@@ -120,6 +155,7 @@ def get_roadmap_follows(firebase_user: Annotated[dict, Depends(get_firebase_user
 
     return roadmaps
 
+
 @router.get("/roadmaps/{roadmap_id}")
 def get_roadmap_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, db: Session = Depends(get_db)):
     roadmap = crud.get_roadmap_by_id(db, roadmap_id)
@@ -129,16 +165,19 @@ def get_roadmap_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_f
 
     return roadmap
 
+
 @router.get("/roadmaps/{roadmap_id}/modules")
 def get_roadmap_by_id_with_modules(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, db: Session = Depends(get_db)):
     """Get roadmap with mdoules"""
-    posthog.capture(firebase_user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'roadmaps/{roadmap_id}/modules'})
+    posthog.capture(firebase_user["uid"], '$pageview', {
+                    '$current_url': os.getenv('FRONTEND_URL') + f'roadmaps/{roadmap_id}/modules'})
     roadmap = crud.get_roadmap_by_id_with_modules(db, roadmap_id)
 
     if roadmap is None:
         raise HTTPException(status_code=404, detail="Roadmap not found")
 
     return roadmap
+
 
 @router.get("/roadmaps/{roadmap_id}/modules/{module_id}")
 def get_module_by_id(module_id: int, db: Session = Depends(get_db)):
@@ -151,6 +190,7 @@ def get_module_by_id(module_id: int, db: Session = Depends(get_db)):
 
 # Roadmap follows
 
+
 @router.post("/roadmaps/{roadmap_id}/follow")
 def follow_roadmap(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, db: Session = Depends(get_db)):
     user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
@@ -161,14 +201,17 @@ def follow_roadmap(firebase_user: Annotated[dict, Depends(get_firebase_user_from
         user_id=user.id,
         roadmap_id=roadmap_id
     )
-    created_roadmap_follow = crud.create_roadmap_follow(db=db, roadmap_follow=roadmap_follow)
+    created_roadmap_follow = crud.create_roadmap_follow(
+        db=db, roadmap_follow=roadmap_follow)
 
     if created_roadmap_follow is None:
-        raise HTTPException(status_code=500, detail="Error creating roadmap follow")
+        raise HTTPException(
+            status_code=500, detail="Error creating roadmap follow")
 
     return created_roadmap_follow
 
 # Modules
+
 
 def create_resources_using_ragsearch_for_submodule(roadmap_title, module_description, submodule_id, db):
     submodule = crud.get_submodule_by_id_with_resources(db, submodule_id)
@@ -179,7 +222,7 @@ def create_resources_using_ragsearch_for_submodule(roadmap_title, module_descrip
     if len(submodule.resources) > 0:
         print("Submodule already populated")
         return
-    
+
     logger.info("WHAT IS GOING ON ")
     logger.info(submodule)
     logger.info("WHAT IS GOING ON ")
@@ -189,51 +232,56 @@ def create_resources_using_ragsearch_for_submodule(roadmap_title, module_descrip
     logger.info("WHAT IS GOING ON ")
     logger.info(roadmap_title)
     logger.info("WHAT IS GOING ON ")
-    query = llm.get_query_to_find_learning_resources(roadmap_title, module_description, submodule_description=submodule.description)
+    query = llm.get_query_to_find_learning_resources(
+        roadmap_title, module_description, submodule_description=submodule.description)
     logger.info(query)
     search_response = ragsearch.get_search_resources(query)
     rag_resources = search_response["results"]
     resources = []
 
     for rag_resource in rag_resources:
-      logger.info("Createing resource")
-      logger.info(rag_resource)
-      resource = schemas.roadmap_schema.ResourceCreate(
-        title=rag_resource["title"],
-        description=rag_resource["content"],
-        url=rag_resource["url"],
-        submodule_id=submodule.id,
-        type="article"
-      )
-      resource = crud.create_resource(db, resource)
+        logger.info("Createing resource")
+        logger.info(rag_resource)
+        resource = schemas.roadmap_schema.ResourceCreate(
+            title=rag_resource["title"],
+            description=rag_resource["content"],
+            url=rag_resource["url"],
+            submodule_id=submodule.id,
+            type="article"
+        )
+        resource = crud.create_resource(db, resource)
 
-      if resource is None:
-        raise HTTPException(status_code=500, detail="Error creating resource")
-      
-      resources.append(resource)
+        if resource is None:
+            raise HTTPException(
+                status_code=500, detail="Error creating resource")
+
+        resources.append(resource)
 
     return []
 
-def create_resources_using_ragsearch_for_module(roadmap_title, module_id, db):
-  module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
 
-  if module is None:
-    raise HTTPException(status_code=404, detail="Module not found")
-  
-  for submodule in module.submodules:
-    create_resources_using_ragsearch_for_submodule(roadmap_title, module.description, submodule.id, db)
+def create_resources_using_ragsearch_for_module(roadmap_title, module_id, db):
+    module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
+
+    if module is None:
+        raise HTTPException(status_code=404, detail="Module not found")
+
+    for submodule in module.submodules:
+        create_resources_using_ragsearch_for_submodule(
+            roadmap_title, module.description, submodule.id, db)
+
 
 @router.post("/roadmaps/{roadmap_id}/modules/{module_id}/populate")
 async def populate_module_with_submodules_and_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, module_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     roadmap = crud.get_roadmap_by_id(db, roadmap_id)
     module = crud.get_module_by_id_with_submodules_and_resources(db, module_id)
-    
+
     if roadmap is None:
         raise HTTPException(status_code=404, detail="Roadmap not found")
 
     if module is None:
         raise HTTPException(status_code=404, detail="Module not found")
-    
+
     if len(module.submodules) > 0:
         raise HTTPException(status_code=400, detail="Module already populated")
 
@@ -253,14 +301,18 @@ async def populate_module_with_submodules_and_resources(firebase_user: Annotated
         created_submodule = crud.create_submodule(db=db, submodule=submodule)
 
         if created_submodule is None:
-            raise HTTPException(status_code=500, detail="Error creating submodule")
-        
+            raise HTTPException(
+                status_code=500, detail="Error creating submodule")
+
         submodules.append(submodule)
 
-    background_tasks.add_task(create_resources_using_ragsearch_for_module, roadmap.title, module.id, db)
+    background_tasks.add_task(
+        create_resources_using_ragsearch_for_module, roadmap.title, module.id, db)
     return submodules
 
 # Submodules
+
+
 @router.post("/roadmaps/{roadmap_id}/modules/{module_id}/submodules/{submodule_id}/populate")
 def populate_submodule_with_resources(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, module_id: int, submodule_id: int, db: Session = Depends(get_db)):
     roadmap = crud.get_roadmap_by_id(db, roadmap_id)
@@ -275,11 +327,12 @@ def populate_submodule_with_resources(firebase_user: Annotated[dict, Depends(get
 
     if submodule is None:
         raise HTTPException(status_code=404, detail="Submodule not found")
-    
+
     if len(submodule.resources) > 0:
-        raise HTTPException(status_code=400, detail="Submodule already populated")
-    
-    resources = create_resources_using_ragsearch_for_submodule(roadmap.title, module.description, submodule.id, db)
+        raise HTTPException(
+            status_code=400, detail="Submodule already populated")
+
+    resources = create_resources_using_ragsearch_for_submodule(
+        roadmap.title, module.description, submodule.id, db)
 
     return resources
-

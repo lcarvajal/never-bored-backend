@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os,json, base64
+import os
+import json
+import base64
 from dotenv import load_dotenv
 import firebase_admin
-from app.router import router
+from app.routes.router import router
 from app.config import get_settings
 from app.database import engine, Base
 from app.utils.admin import configure_admin
