@@ -132,7 +132,7 @@ def get_roadmap_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_f
 @router.get("/roadmaps/{roadmap_id}/modules")
 def get_roadmap_by_id_with_modules(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, db: Session = Depends(get_db)):
     """Get roadmap with mdoules"""
-    posthog.capture(firebase_user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'roadmaps/' + str(roadmap_id) + '/modules'})
+    posthog.capture(firebase_user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'roadmaps/{roadmap_id}/modules'})
     roadmap = crud.get_roadmap_by_id_with_modules(db, roadmap_id)
 
     if roadmap is None:
