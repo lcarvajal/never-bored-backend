@@ -104,6 +104,7 @@ async def post_roadmaps(
 
 @router.get("/roadmaps")
 def get_roadmap_follows(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], db: Session = Depends(get_db)):
+    """Get roadmap follows"""
     user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
@@ -130,6 +131,8 @@ def get_roadmap_by_id(firebase_user: Annotated[dict, Depends(get_firebase_user_f
 
 @router.get("/roadmaps/{roadmap_id}/modules")
 def get_roadmap_by_id_with_modules(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], roadmap_id: int, db: Session = Depends(get_db)):
+    """Get roadmap with mdoules"""
+    posthog.capture(firebase_user["uid"], '$pageview', {'$current_url': os.getenv('FRONTEND_URL') + f'roadmaps/' + str(roadmap_id) + '/modules'})
     roadmap = crud.get_roadmap_by_id_with_modules(db, roadmap_id)
 
     if roadmap is None:
