@@ -9,10 +9,13 @@ from app.routes import public, roadmaps, users
 from app.config import get_settings
 from app.database import engine, Base
 from app.utils.admin import configure_admin
+import stripe
 
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
+
+stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 app = FastAPI()
 app.include_router(public.router)
