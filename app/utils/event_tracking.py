@@ -10,10 +10,10 @@ if os.getenv('ENV') == 'dev':
     posthog.disabled = True
 
 
-def capture_event(uid, event_name, properties):
+def capture(uid, event_name, properties):
     posthog.capture(uid, event_name, properties)
 
 
-def capture_page_open(uid, route):
+def capture_pageview(uid, route):
     posthog.capture(uid, '$pageview', {
                     '$current_url': os.getenv('FRONTEND_URL') + route})

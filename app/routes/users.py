@@ -66,11 +66,15 @@ def create_checkout_session(firebase_user: Annotated[dict, Depends(get_firebase_
                 },
             ],
             mode='subscription',
-            success_url=os.getenv('FRONTEND_URL') + '?success=true',
-            cancel_url=os.getenv('FRONTEND_URL') + '?canceled=true',
+            success_url=os.getenv('FRONTEND_URL') + \
+            '/order-preview?success=true',
+            cancel_url=os.getenv('FRONTEND_URL') + \
+            '/order-preview?canceled=true',
             automatic_tax={'enabled': True},
         )
     except Exception as e:
         return str(e)
 
-    return RedirectResponse(checkout_session.url)
+    return {
+        "redirect_url": checkout_session.url
+    }
