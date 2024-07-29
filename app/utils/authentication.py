@@ -6,6 +6,7 @@ from firebase_admin import auth
 # Use a simple bearer scheme as auth is handled by firebase and not fastapi
 bearer_scheme = HTTPBearer(auto_error=False)
 
+
 def get_firebase_user_from_token(
     token: Annotated[Optional[HTTPAuthorizationCredentials], Depends(bearer_scheme)],
 ) -> Optional[dict]:
