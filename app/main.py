@@ -5,7 +5,7 @@ import json
 import base64
 from dotenv import load_dotenv
 import firebase_admin
-from app.routes.router import router
+from app.routes import public, roadmaps, users
 from app.config import get_settings
 from app.database import engine, Base
 from app.utils.admin import configure_admin
@@ -13,12 +13,11 @@ from app.utils.admin import configure_admin
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
-# Drops all db tables...
-# for tbl in reversed(Base.metadata.sorted_tables):
-#     tbl.drop(engine)
 
 app = FastAPI()
-app.include_router(router)
+app.include_router(public.router)
+app.include_router(users.router)
+app.include_router(roadmaps.router)
 settings = get_settings()
 
 origins = [
