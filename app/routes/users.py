@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from typing import Annotated
 import os
+import stripe
 from fastapi.responses import RedirectResponse
 from app.utils.authentication import get_firebase_user_from_token
 from app.utils import crud, event_tracking
