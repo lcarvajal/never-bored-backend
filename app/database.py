@@ -1,9 +1,12 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-import os
+import os, logging
 from dotenv import load_dotenv
 
 load_dotenv()
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.pool').setLevel(logging.INFO)
 
 if os.getenv('ENV') == 'dev':
     SQLALCHEMY_DATABASE_URL = os.getenv('PROD_DATABASE_URL')
