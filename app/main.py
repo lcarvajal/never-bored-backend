@@ -1,3 +1,4 @@
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -14,7 +15,6 @@ import stripe
 load_dotenv()
 
 Base.metadata.create_all(bind=engine)
-
 stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 app = FastAPI()
