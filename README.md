@@ -57,6 +57,7 @@ Helpers
 
 [Open documentation](https://alembic.sqlalchemy.org/en/latest/tutorial.html)
 
+- `alembic check`
 - `alembic revision --autogenerate -m "Initial migration"`
 - `alembic upgrade head`
 
