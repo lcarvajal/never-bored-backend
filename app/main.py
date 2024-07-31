@@ -6,7 +6,7 @@ import json
 import base64
 from dotenv import load_dotenv
 import firebase_admin
-from app.routes import public, roadmaps, users
+from app.routes import public, roadmaps, subscriptions, users
 from app.config import get_settings
 from app.database import engine, Base
 from app.utils.admin import configure_admin
@@ -16,10 +16,13 @@ load_dotenv()
 
 stripe.api_key = os.getenv('STRIPE_API_KEY')
 
+logger = logging.getLogger(__name__)
+
 app = FastAPI()
 app.include_router(public.router)
 app.include_router(users.router)
 app.include_router(roadmaps.router)
+app.include_router(subscriptions.router)
 settings = get_settings()
 
 origins = [
@@ -46,4 +49,6 @@ cred = firebase_admin.credentials.Certificate(service_account_info)
 firebase_admin.initialize_app(cred)
 
 if os.getenv('ENV') == 'dev':
-    configure_admin(app, engine)
+    logger.info("Running in development mode")
+
+configure_admin(app, engine)

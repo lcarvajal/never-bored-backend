@@ -13,6 +13,12 @@ def add_commit_refresh(db: Session, model):
 # Users
 
 
+def create_user(db: Session, user: user_schema.UserCreate):
+    db_user = models.user.User(**user.model_dump())
+    add_commit_refresh(db, db_user)
+    return db_user
+
+
 def get_user(db: Session, user_id: int):
     return db.query(models.user.User).filter(models.user.User.id == user_id).first()
 
@@ -21,13 +27,11 @@ def get_user_by_uid(db: Session, authentication_service: str, uid: str):
     return db.query(models.user.User).filter(and_(models.user.User.uid == uid, models.user.User.authentication_service == authentication_service)).first()
 
 
-def create_user(db: Session, user: user_schema.UserCreate):
-    db_user = models.user.User(**user.model_dump())
-    add_commit_refresh(db, db_user)
-    return db_user
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.user.User).filter(models.user.User.email == email).first()
 
 
-def update_user(db: Session, user: user_schema.UserUpdate):
+def update_user(db: Session, user: user_schema.User):
     db_user = db.query(models.user.User).filter(
         models.user.User.id == user.id).first()
 
@@ -42,6 +46,7 @@ def update_user(db: Session, user: user_schema.UserUpdate):
 
     add_commit_refresh(db, db_user)
     return db_user
+
 
 # Roadmaps
 
@@ -137,6 +142,14 @@ def create_subscription(db: Session, subscription: subscription_schema.Subscript
     return db_subscription
 
 
+def get_active_subscriptions_for_user(db: Session, user_id: int):
+    return db.query(models.subscription.Subscription).filter(and_(models.subscription.Subscription.user_id == user_id, models.subscription.Subscription.status == 'active')).all()
+
+
+def get_subscription_by_stripe_id(db: Session, subscription_id: str):
+    return db.query(models.subscription.Subscription).filter(models.subscription.Subscription.payment_gateway_subscription_id == subscription_id & models.subscription.Subscription.payment_gateway_provider == 'stripe').first()
+
+
 def update_subscription(db: Session, subscription: subscription_schema.Subscription):
     db_subscription = db.query(models.subscription.Subscription).filter(
         models.subscription.Subscription.id == subscription.id).first()
@@ -148,5 +161,10 @@ def update_subscription(db: Session, subscription: subscription_schema.Subscript
     return db_subscription
 
 
-def get_active_subscriptions_for_user(db: Session, user_id: int):
-    return db.query(models.subscription.Subscription).filter(and_(models.subscription.Subscription.user_id == user_id, models.subscription.Subscription.status == 'active')).all()
+def delete_subscription(db: Session, subscription_id: int):
+    db_subscription = db.query(models.subscription.Subscription).filter(
+        models.subscription.Subscription.id == subscription_id).delete()
+    db_subscription.status = 'deleted'
+
+    add_commit_refresh(db, db_subscription)
+    return db_subscription

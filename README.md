@@ -94,6 +94,10 @@ Helpers
   supporting SQLAlchemy dialect.
 - Sequence additions, removals - not yet implemented.
 
+## Test Stripe Locally
+
+- `stripe listen --forward-to https://127.0.0.1 --skip-verify`
+
 ## Generate local SSL
 
 - `uvicorn app.main:app --host 0.0.0.0 --port 443 --ssl-keyfile=certs/key.pem --ssl-certfile=certs/cert.pem`
