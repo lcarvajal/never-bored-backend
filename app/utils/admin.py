@@ -1,4 +1,4 @@
-from app.models import user, roadmap
+from app.models import user, roadmap, subscription
 from sqladmin import Admin, ModelView
 
 
@@ -25,6 +25,11 @@ def configure_admin(app, engine):
         column_list = [roadmap.Resource.id, roadmap.Resource.title,
                        roadmap.Resource.type, roadmap.Resource.url]
 
+    class SubscriptionAdmin(ModelView, model=subscription.Subscription):
+        column_list = [subscription.Subscription.id,
+                       subscription.Subscription.user_id, subscription.Subscription.status]
+
+    admin.add_view(SubscriptionAdmin)
     admin.add_view(UserAdmin)
     admin.add_view(RoadmapAdmin)
     admin.add_view(RoadmapFollowAdmin)

@@ -1,3 +1,5 @@
+from app.database import SQLALCHEMY_DATABASE_URL
+from app.database import Base
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -14,11 +16,13 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Add the database URL from the environment variable
+database_url = SQLALCHEMY_DATABASE_URL
+config.set_main_option('sqlalchemy.url', database_url)
+
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -64,8 +68,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
+        target_metadata.reflect(bind=connection)  # Reflect existing schema
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata
         )
 
         with context.begin_transaction():
