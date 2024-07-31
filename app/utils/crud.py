@@ -1,7 +1,7 @@
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from app import models
-from app.schemas import user_schema, roadmap_schema
+from app.schemas import user_schema, roadmap_schema, subscription_schema
 
 
 def add_commit_refresh(db: Session, model):
@@ -113,18 +113,19 @@ def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
 
 # Subscriptions
 
-def create_subscription(db: Session, subscription: roadmap_schema.SubscriptionCreate):
-    db_subscription = models.roadmap.Subscription(**subscription.model_dump())
+def create_subscription(db: Session, subscription: subscription_schema.SubscriptionCreate):
+    db_subscription = models.subscription.Subscription(
+        **subscription.model_dump())
     add_commit_refresh(db, db_subscription)
     return db_subscription
 
 
-def update_subscription(db: Session, subscription: roadmap_schema.SubscriptionUpdate):
-    db_subscription = db.query(models.roadmap.Subscription).filter(
-        models.roadmap.Subscription.id == subscription.id).first()
+def update_subscription(db: Session, subscription: subscription_schema.Subscription):
+    db_subscription = db.query(models.subscription.Subscription).filter(
+        models.subscription.Subscription.id == subscription.id).first()
     add_commit_refresh(db, db_subscription)
     return db_subscription
 
 
 def get_active_subscriptions_for_user(db: Session, user_id: int):
-    return db.query(models.roadmap.Subscription).filter(and_(models.roadmap.Subscription.user_id == user_id, models.roadmap.Subscription.status == 'active')).all()
+    return db.query(models.subscription.Subscription).filter(and_(models.subscription.Subscription.user_id == user_id, models.subscription.Subscription.status == 'active')).all()
