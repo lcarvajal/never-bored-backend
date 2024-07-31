@@ -27,8 +27,8 @@ def get_user_by_uid(db: Session, authentication_service: str, uid: str):
     return db.query(models.user.User).filter(and_(models.user.User.uid == uid, models.user.User.authentication_service == authentication_service)).first()
 
 
-def get_user_by_email(db: Session, email: str):
-    return db.query(models.user.User).filter(models.user.User.email == email).first()
+def get_user_by_payment_gateway_customer_id(db: Session, customer_id: str, provider: str):
+    return db.query(models.user.User).filter(and_(models.user.User.payment_gateway_customer_id == customer_id, models.user.User.payment_gateway_provider == provider)).first()
 
 
 def update_user(db: Session, user: user_schema.User):
@@ -147,7 +147,7 @@ def get_active_subscriptions_for_user(db: Session, user_id: int):
 
 
 def get_subscription_by_stripe_id(db: Session, subscription_id: str):
-    return db.query(models.subscription.Subscription).filter(models.subscription.Subscription.payment_gateway_subscription_id == subscription_id & models.subscription.Subscription.payment_gateway_provider == 'stripe').first()
+    return db.query(models.subscription.Subscription).filter(and_(models.subscription.Subscription.payment_gateway_subscription_id == subscription_id, models.subscription.Subscription.payment_gateway_provider == 'stripe')).first()
 
 
 def update_subscription(db: Session, subscription: subscription_schema.Subscription):

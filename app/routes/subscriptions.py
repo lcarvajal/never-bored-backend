@@ -25,7 +25,40 @@ router = APIRouter(
 
 
 @router.post("/checkout-session")
-def create_checkout_session(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)]):
+def create_checkout_session(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], db: Session = Depends(get_db)):
+    user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+
+    if user is None:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found")
+
+    if user.payment_gateway_customer_id is None:
+        stripe_customer = stripe.Customer.create(
+            name=user.name,
+            email=user.email,
+        )
+
+        if stripe_customer is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create Stripe customer")
+
+        logger.info("Created Stripe customer")
+
+        user.payment_gateway_customer_id = stripe_customer.id
+        user.payment_gateway_provider = 'stripe'
+
+        updated_user = crud.update_user(db, user)
+
+        logger.info("Updated user with Stripe customer ID")
+        logger.info(updated_user)
+
+        if updated_user is None:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to update user")
+
     try:
         checkout_session = stripe.checkout.Session.create(
             line_items=[
@@ -35,11 +68,15 @@ def create_checkout_session(firebase_user: Annotated[dict, Depends(get_firebase_
                     'quantity': 1,
                 },
             ],
+            customer=user.payment_gateway_customer_id,
+            customer_update={
+                'address': 'auto'
+            },
             mode='subscription',
             success_url=os.getenv('FRONTEND_URL') + \
-            '/order-preview?success=true',
+            '/checkout?success=true',
             cancel_url=os.getenv('FRONTEND_URL') + \
-            '/order-preview?canceled=true',
+            '/checkout?canceled=true',
             automatic_tax={'enabled': True},
         )
     except Exception as e:
@@ -55,9 +92,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     payload = await request.body()
     sig_header = request.headers.get('stripe-signature')
 
-    logger.info("Received webhook")
-    logger.info(payload)
-
     try:
         event = stripe.Webhook.construct_event(
             payload, sig_header, os.getenv('STRIPE_ENDPOINT_SECRET'))
@@ -65,6 +99,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Invalid payload")
     except stripe.error.SignatureVerificationError as e:
         raise HTTPException(status_code=400, detail="Invalid signature")
+
+    logger.info("Received webhook")
+    logger.info('ID')
+    logger.info(event['data']['object']['id'])
+    logger.info('...')
 
     if event['type'] == 'customer.subscription.created':
         handle_subscription_created(event['data']['object'], db)
@@ -78,34 +117,37 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
 
 def handle_subscription_created(subscription, db: Session):
-    user = crud.get_user_by_email(db, subscription['customer'])
+    user = crud.get_user_by_payment_gateway_customer_id(
+        db, subscription['customer'], 'stripe')
     if user:
-        new_subscription = schemas.SubscriptionCreate(
+        new_subscription = schemas.subscription_schema.SubscriptionCreate(
             user_id=user.id,
             payment_gateway_customer_id=subscription['customer'],
             payment_gateway_subscription_id=subscription['id'],
             payment_gateway_provider='stripe',
             status=subscription['status'],
-            current_period_end=datetime.fromtimestamp(
+            current_period_end=datetime.datetime.fromtimestamp(
                 subscription['current_period_end']),
         )
         crud.create_subscription(db, new_subscription)
 
-        crud.update_user(db, user, schemas.User(
-            payment_gateway_customer_id=subscription['customer'],
-            payment_gateway_provider='stripe'))
+        user.payment_gateway_customer_id = subscription['customer']
+        user.payment_gateway_provider = 'stripe'
+        crud.update_user(db, user)
+    else:
+        logger.info('User not found. Unable to create subscription.')
 
 
 def handle_subscription_updated(subscription, db: Session):
     db_subscription = crud.get_subscription_by_stripe_id(
         db, subscription['id'])
     if db_subscription:
-        update_data = {
-            "status": subscription['status'],
-            "current_period_end": datetime.fromtimestamp(subscription['current_period_end'])
-        }
+        db_subscription.status = subscription['status']
+        db_subscription.current_period_end = datetime.datetime.fromtimestamp(
+            subscription['current_period_end'])
+
         crud.update_subscription(
-            db, db_subscription.id, schemas.SubscriptionUpdate(**update_data))
+            db, db_subscription)
 
 
 def handle_subscription_deleted(subscription, db: Session):
