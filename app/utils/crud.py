@@ -26,6 +26,23 @@ def create_user(db: Session, user: user_schema.UserCreate):
     add_commit_refresh(db, db_user)
     return db_user
 
+
+def update_user(db: Session, user: user_schema.UserUpdate):
+    db_user = db.query(models.user.User).filter(
+        models.user.User.id == user.id).first()
+
+    db_user.name = user.name
+    db_user.email = user.email
+
+    if user.payment_gateway_customer_id:
+        db_user.payment_gateway_customer_id = user.payment_gateway_customer_id
+
+    if user.payment_gateway_provider:
+        db_user.payment_gateway_provider = user.payment_gateway_provider
+
+    add_commit_refresh(db, db_user)
+    return db_user
+
 # Roadmaps
 
 
@@ -123,6 +140,10 @@ def create_subscription(db: Session, subscription: subscription_schema.Subscript
 def update_subscription(db: Session, subscription: subscription_schema.Subscription):
     db_subscription = db.query(models.subscription.Subscription).filter(
         models.subscription.Subscription.id == subscription.id).first()
+
+    db_subscription.status = subscription.status
+    db_subscription.current_period_end = subscription.current_period_end
+
     add_commit_refresh(db, db_subscription)
     return db_subscription
 
