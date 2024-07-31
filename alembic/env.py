@@ -30,6 +30,14 @@ target_metadata = Base.metadata
 # ... etc.
 
 
+def include_object(object, name, type_, reflected, compare_to):
+    # Don't drop existing tables
+    if type_ == "table" and reflected and compare_to is None:
+        return False
+    else:
+        return True
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -68,10 +76,10 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        target_metadata.reflect(bind=connection)  # Reflect existing schema
         context.configure(
             connection=connection,
-            target_metadata=target_metadata
+            target_metadata=target_metadata,
+            include_object=include_object
         )
 
         with context.begin_transaction():
