@@ -3,6 +3,13 @@ from sqlalchemy.orm import Session
 from app import models
 from app.schemas import user_schema, roadmap_schema
 
+
+def add_commit_refresh(db: Session, model):
+    db.add(model)
+    db.commit()
+    db.refresh(model)
+    return model
+
 # Users
 
 
@@ -16,9 +23,7 @@ def get_user_by_uid(db: Session, authentication_service: str, uid: str):
 
 def create_user(db: Session, user: user_schema.UserCreate):
     db_user = models.user.User(**user.model_dump())
-    db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
+    add_commit_refresh(db, db_user)
     return db_user
 
 # Roadmaps
@@ -41,18 +46,14 @@ def get_roadmap_by_id_with_modules(db: Session, roadmap_id: int):
 
 def create_roadmap(db: Session, roadmap: roadmap_schema.RoadmapCreate):
     db_roadmap = models.roadmap.Roadmap(**roadmap.model_dump())
-    db.add(db_roadmap)
-    db.commit()
-    db.refresh(db_roadmap)
+    add_commit_refresh(db, db_roadmap)
     return db_roadmap
 
 
 def create_roadmap_follow(db: Session, roadmap_follow: roadmap_schema.RoadmapFollowCreate):
     db_roadmap_follow = models.roadmap.RoadmapFollow(
         **roadmap_follow.model_dump())
-    db.add(db_roadmap_follow)
-    db.commit()
-    db.refresh(db_roadmap_follow)
+    add_commit_refresh(db, db_roadmap_follow)
     return db_roadmap_follow
 
 # Modules
@@ -60,9 +61,7 @@ def create_roadmap_follow(db: Session, roadmap_follow: roadmap_schema.RoadmapFol
 
 def create_module(db: Session, module: roadmap_schema.ModuleCreate):
     db_module = models.roadmap.Module(**module.model_dump())
-    db.add(db_module)
-    db.commit()
-    db.refresh(db_module)
+    add_commit_refresh(db, db_module)
     return db_module
 
 
@@ -92,9 +91,7 @@ def get_module_by_id_with_submodules_and_resources(db: Session, module_id: int):
 
 def create_submodule(db: Session, submodule: roadmap_schema.SubmoduleCreate):
     db_submodule = models.roadmap.Submodule(**submodule.model_dump())
-    db.add(db_submodule)
-    db.commit()
-    db.refresh(db_submodule)
+    add_commit_refresh(db, db_submodule)
     return db_submodule
 
 
@@ -110,7 +107,24 @@ def get_submodule_by_id_with_resources(db: Session, submodule_id: int):
 
 def create_resource(db: Session, resource: roadmap_schema.ResourceCreate):
     db_resource = models.roadmap.Resource(**resource.model_dump())
-    db.add(db_resource)
-    db.commit()
-    db.refresh(db_resource)
+    add_commit_refresh(db, db_resource)
     return db_resource
+
+
+# Subscriptions
+
+def create_subscription(db: Session, subscription: roadmap_schema.SubscriptionCreate):
+    db_subscription = models.roadmap.Subscription(**subscription.model_dump())
+    add_commit_refresh(db, db_subscription)
+    return db_subscription
+
+
+def update_subscription(db: Session, subscription: roadmap_schema.SubscriptionUpdate):
+    db_subscription = db.query(models.roadmap.Subscription).filter(
+        models.roadmap.Subscription.id == subscription.id).first()
+    add_commit_refresh(db, db_subscription)
+    return db_subscription
+
+
+def get_active_subscriptions_for_user(db: Session, user_id: int):
+    return db.query(models.roadmap.Subscription).filter(and_(models.roadmap.Subscription.user_id == user_id, models.roadmap.Subscription.status == 'active')).all()
