@@ -6,6 +6,10 @@ The backend for the Never Bored Learning Frontend.
 
 [Open docs](http://127.0.0.1:8000/docs)
 
+## Setup
+
+1. Create initial tables...
+
 ## Techologies
 
 - FastAPI

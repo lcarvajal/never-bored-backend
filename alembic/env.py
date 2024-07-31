@@ -6,6 +6,10 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from app.models.user import User
+from app.models.roadmap import Roadmap, RoadmapFollow, Module, Submodule, Resource
+from app.models.subscription import Subscription
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

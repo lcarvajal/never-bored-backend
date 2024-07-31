@@ -14,7 +14,6 @@ import stripe
 
 load_dotenv()
 
-Base.metadata.create_all(bind=engine)
 stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 app = FastAPI()
