@@ -1,3 +1,4 @@
+import datetime
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 from app import models
@@ -48,6 +49,14 @@ def update_user(db: Session, user: user_schema.User):
     return db_user
 
 
+# Roadmaps
+
+
+def get_roadmaps_created_by_user_today(db: Session, user_id: int):
+    time_24_hours_ago = datetime.datetime.now() - datetime.timedelta(days=1)
+    return db.query(models.roadmap.Roadmap).filter(and_(models.roadmap.Roadmap.owner_id == user_id, models.roadmap.Roadmap.created_at >= time_24_hours_ago)).all()
+
+
 def get_followed_roadmaps(db: Session, user_id: int):
     return db.query(
         models.roadmap.Roadmap
@@ -58,8 +67,6 @@ def get_followed_roadmaps(db: Session, user_id: int):
     ).order_by(
         models.roadmap.Roadmap.created_at.desc()
     ).all()
-
-# Roadmaps
 
 
 def get_roadmap_by_id(db: Session, roadmap_id: int):

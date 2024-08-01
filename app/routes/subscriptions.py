@@ -63,7 +63,6 @@ def create_checkout_session(firebase_user: Annotated[dict, Depends(get_firebase_
         checkout_session = stripe.checkout.Session.create(
             line_items=[
                 {
-                    # Provide the exact Price ID (for example, pr_1234) of the product you want to sell
                     'price': 'price_1Pi12ERwlNxepH9XDobR4Gjd',
                     'quantity': 1,
                 },
@@ -73,9 +72,9 @@ def create_checkout_session(firebase_user: Annotated[dict, Depends(get_firebase_
                 'address': 'auto'
             },
             mode='subscription',
-            success_url=os.getenv('FRONTEND_URL') + \
+            success_url=os.getenv('FRONTEND_URL') +
             '/checkout?success=true',
-            cancel_url=os.getenv('FRONTEND_URL') + \
+            cancel_url=os.getenv('FRONTEND_URL') +
             '/checkout?canceled=true',
             automatic_tax={'enabled': True},
         )
@@ -154,7 +153,10 @@ def handle_subscription_deleted(subscription, db: Session):
     db_subscription = crud.get_subscription_by_stripe_id(
         db, subscription['id'])
     if db_subscription:
-        crud.delete_subscription(db, db_subscription.id)
+        db_subscription.status = 'deleted'
+
+        crud.update_subscription(
+            db, db_subscription)
 
 
 def handle_payment_succeeded(invoice, db: Session):

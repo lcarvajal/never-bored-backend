@@ -33,9 +33,21 @@ async def post_roadmaps(
     db: Session = Depends(get_db),
 ) -> schemas.roadmap_schema.Roadmap:
     """Creates a roadmap for the user and stores it in the database"""
+
     user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
+
+    active_subscriptions = crud.get_active_subscriptions_for_user(db, user.id)
+
+    if len(active_subscriptions) == 0:
+        logger.info("User doesn't have active subscription")
+        roadmaps = crud.get_roadmaps_created_by_user_today(db, user.id)
+
+        if len(roadmaps) > 3:
+            logger.info("User created more than three roadmaps")
+            raise HTTPException(
+                status_code=402, detail="Free user already created three roadmaps today")
 
     llm_roadmap = llm.get_roadmap(learning_goal.description)
 
