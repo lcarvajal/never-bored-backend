@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import firebase_admin
 from app.routes import public, roadmaps, subscriptions, users
 from app.config import get_settings
-from app.database import engine, Base
+from app.database import engine
 from app.utils.admin import configure_admin
 import stripe
 

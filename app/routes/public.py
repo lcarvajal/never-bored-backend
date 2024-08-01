@@ -1,6 +1,4 @@
-from fastapi import APIRouter, Depends
-from typing import Annotated
-from app.utils.authentication import get_firebase_user_from_token
+from fastapi import APIRouter
 
 router = APIRouter()
 

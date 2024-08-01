@@ -1,6 +1,6 @@
 import datetime
 import os
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import Annotated
 import stripe
 from app.utils.authentication import get_firebase_user_from_token
