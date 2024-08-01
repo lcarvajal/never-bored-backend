@@ -48,6 +48,17 @@ def update_user(db: Session, user: user_schema.User):
     return db_user
 
 
+def get_followed_roadmaps(db: Session, user_id: int):
+    return db.query(
+        models.roadmap.Roadmap
+    ).join(
+        models.roadmap.RoadmapFollow
+    ).filter(
+        models.roadmap.RoadmapFollow.user_id == user_id
+    ).order_by(
+        models.roadmap.Roadmap.created_at.desc()
+    ).all()
+
 # Roadmaps
 
 

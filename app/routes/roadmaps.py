@@ -84,17 +84,14 @@ async def post_roadmaps(
 def get_roadmap_follows(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], db: Session = Depends(get_db)):
     """Get roadmap follows"""
     user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    roadmaps: list[schemas.roadmap_schema.Roadmap] = []
-    for follow in user.roadmap_follows:
-        roadmap = crud.get_roadmap_by_id(db, follow.roadmap_id)
+    roadmaps = crud.get_followed_roadmaps(db, user.id)
 
-        if roadmap is None:
-            raise HTTPException(status_code=404, detail="Roadmap not found")
-
-        roadmaps.append(roadmap)
+    if roadmaps is None:
+        raise HTTPException(status_code=404, detail="Roadmaps not found")
 
     return roadmaps
 
