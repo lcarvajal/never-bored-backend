@@ -40,7 +40,7 @@ async def post_roadmaps(
 
     active_subscriptions = crud.get_active_subscriptions_for_user(db, user.id)
 
-    if len(active_subscriptions) == 0:
+    if (len(active_subscriptions) == 0) and (user.email != "lukascarvajal@gmail.com"):
         logger.info("User doesn't have active subscription")
         roadmaps = crud.get_roadmaps_created_by_user_today(db, user.id)
 
