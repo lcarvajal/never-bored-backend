@@ -162,3 +162,22 @@ def handle_subscription_deleted(subscription, db: Session):
 def handle_payment_succeeded(invoice, db: Session):
     # Optionally handle successful payment events
     pass
+
+
+@router.delete("/")
+async def cancel_active_subscription(firebase_user: Annotated[dict, Depends(get_firebase_user_from_token)], db: Session = Depends(get_db)):
+    user = crud.get_user_by_uid(db, "firebase", firebase_user["uid"])
+
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    active_subscriptions = crud.get_active_subscriptions_for_user(
+        db, user.id)
+
+    for subscription in active_subscriptions:
+        stripe.Subscription.modify(
+            subscription.payment_gateway_subscription_id,
+            cancel_at_period_end=True,
+        )
+
+    return {"success": True}
