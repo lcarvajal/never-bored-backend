@@ -96,7 +96,7 @@ Helpers
 
 ## Test Stripe Locally
 
-- `stripe listen --forward-to https://127.0.0.1 --skip-verify`
+- `stripe listen --forward-to https://127.0.0.1/subscriptions/webhook --skip-verify`
 
 ## Generate local SSL
 
